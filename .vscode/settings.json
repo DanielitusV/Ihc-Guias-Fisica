@@ -1,0 +1,46 @@
+{
+  "latex-workshop.latex.outDir": "%DIR%/output",
+
+  "latex-workshop.latex.autoClean.run": "onBuilt",
+  "latex-workshop.latex.clean.enabled": true,
+
+  "latex-workshop.latex.clean.fileTypes": [
+    "*.aux",
+    "*.bbl",
+    "*.bcf",
+    "*.blg",
+    "*.fdb_latexmk",
+    "*.fls",
+    "*.idx",
+    "*.ilg",
+    "*.ind",
+    "*.lof",
+    "*.log",
+    "*.lot",
+    "*.out",
+    "*.run.xml",
+    "*.synctex.gz",
+    "*.toc",
+    "*.xdv"
+  ],
+
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "pdflatex -> output",
+      "tools": ["pdflatex"]
+    }
+  ],
+
+  "latex-workshop.latex.tools": [
+    {
+      "name": "pdflatex",
+      "command": "pdflatex",
+      "args": [
+        "-interaction=nonstopmode",
+        "-synctex=1",
+        "-output-directory=%OUTDIR%",
+        "%DOC%"
+      ]
+    }
+  ]
+}

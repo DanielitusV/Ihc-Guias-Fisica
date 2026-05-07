@@ -1,0 +1,110 @@
+\documentclass[12pt,letterpaper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=2.54cm]{geometry}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage[hypertexnames=false]{hyperref}
+\usepackage{helvet}
+\usepackage{fancyhdr}
+
+\setlength{\headheight}{15pt}
+
+\renewcommand{\familydefault}{\sfdefault}
+
+\doublespacing
+\setlength{\parindent}{1.27cm}
+\setlength{\parskip}{0pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+\titleformat{\section}
+{\normalfont\bfseries}
+{\thesection.}{0.5em}{}
+
+\titleformat{\subsection}
+{\normalfont\bfseries}
+{\thesubsection.}{0.5em}{}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=black
+}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+
+    {\large \textbf{UNIVERSIDAD MAYOR DE SAN SIMÓN}}\\
+    {\large \textbf{FACULTAD DE CIENCIAS Y TECNOLOGÍA}}\\
+    {\large \textbf{CARRERA DE INGENIERÍA INFORMÁTICA}}\\[2cm]
+
+    {\large \textbf{INTERACCIÓN HUMANO-COMPUTADORA}}\\[1.5cm]
+
+    \rule{\textwidth}{0.5pt}\\[0.5cm]
+    {\Large \textbf{Trabajo Final -- Semana 1}}\\[0.3cm]
+    {\large \textbf{Definición del problema y contexto}}\\[0.5cm]
+    \rule{\textwidth}{0.5pt}\\[1.5cm]
+
+    {\large \textbf{Tema}}\\[0.3cm]
+    {\large Diseño de una interfaz administrativa para el control de distribución presencial de guías académicas en la Carrera de Física}\\[2cm]
+
+    \begin{flushleft}
+        \textbf{Grupo:} UXploradores\\
+        \textbf{Materia:} Interacción Humano-Computadora\\
+        \textbf{Docente:} Mgr. Corina Flores Villarroel\\
+        \textbf{Gestión:} I-2026
+    \end{flushleft}
+
+    \vfill
+
+    {\large Cochabamba -- Bolivia}\\
+    {\large 2026}
+
+\end{titlepage}
+
+El presente trabajo aborda una problemática real dentro del contexto universitario, relacionada con el control de distribución presencial de guías académicas en la Carrera de Física. Los usuarios objetivo son principalmente los encargados del Centro de Estudiantes de Física, quienes registran ventas, controlan inventario y organizan la información administrativa. El contexto de uso corresponde a la atención presencial de estudiantes que compran guías impresas mediante pago en efectivo o QR. A partir de esta situación, se identifican como necesidades principales contar con un registro más claro de ventas, stock, ingresos, gastos y reportes básicos para apoyar la rendición de cuentas.
+
+\section{Planteamiento del problema}
+
+En la Carrera de Física, las guías académicas son elaboradas por el Departamento de Física y distribuidas físicamente mediante el Centro de Estudiantes. El proceso de compra se realiza de forma presencial: el estudiante consulta si la guía que necesita está disponible, realiza el pago correspondiente en efectivo o mediante QR, y recibe la guía impresa.
+
+Aunque este proceso resulta directo para el estudiante, el control administrativo asociado presenta dificultades. Actualmente, el registro de ventas, el inventario, los movimientos de dinero, los pagos relacionados con la fotocopiadora y la elaboración de reportes se manejan de forma manual o parcialmente desorganizada. Esto puede provocar errores de registro, pérdida de información, dificultad para conocer el stock real y retrasos al momento de realizar rendiciones de cuentas.
+
+El problema principal no está en la venta presencial de las guías, ya que esta modalidad continuará igual. La dificultad se encuentra en la falta de una interfaz clara que apoye a los encargados en el registro y consulta de información. Al depender de apuntes, cálculos manuales o archivos poco estructurados, aumenta la carga cognitiva de los usuarios y también la posibilidad de cometer errores.
+
+Desde el enfoque de Interacción Humano-Computadora, esta situación representa un problema de usabilidad, organización de información y eficiencia en la interacción usuario-sistema. Por ello, se plantea diseñar una solución digital en forma de prototipo interactivo que apoye el control administrativo de la distribución presencial de guías académicas.
+
+\section{Justificación}
+
+El desarrollo de este proyecto se justifica porque responde a una necesidad concreta dentro de la universidad. El Centro de Estudiantes de Física cumple un rol importante en la distribución de guías académicas, pero el control manual de ventas, inventario y dinero puede volverse poco confiable cuando existen varios movimientos durante una gestión académica.
+
+Una interfaz administrativa centrada en el usuario permitiría organizar mejor la información, reducir errores humanos y facilitar la consulta de datos relevantes. Además, ayudaría a que los encargados realicen tareas frecuentes, como registrar una venta o revisar el stock disponible, de forma más rápida y comprensible.
+
+El proyecto no busca crear una tienda virtual ni reemplazar la venta presencial. Su propósito es mejorar el apoyo administrativo mediante una interfaz simple, clara y fácil de usar. Esto se relaciona directamente con los principios de IHC, ya que se enfoca en la experiencia del usuario, la reducción de carga cognitiva y la claridad en la interacción.
+
+También resulta viable porque el contexto de aplicación es cercano y permite trabajar con usuarios reales. Esto facilitará, en etapas posteriores, realizar entrevistas, encuestas, pruebas de usabilidad y ajustes al prototipo con base en evidencia.
+
+\section{Objetivos}
+
+\subsection{Objetivo general}
+
+Diseñar un prototipo interactivo de una interfaz administrativa para apoyar el control de distribución presencial de guías académicas en la Carrera de Física, aplicando principios de usabilidad, arquitectura de información y diseño centrado en el usuario.
+
+\subsection{Objetivos específicos}
+
+\begin{itemize}
+    \item Identificar las principales dificultades del proceso actual de registro y control de guías académicas.
+    \item Definir el contexto de uso, los usuarios objetivo y las necesidades principales del sistema.
+    \item Delimitar las funciones básicas del prototipo: inventario, ventas, ingresos, gastos y reportes.
+    \item Proponer una solución digital simple que reduzca la carga administrativa y facilite la interacción de los encargados con la información.
+\end{itemize}
+
+\end{document}

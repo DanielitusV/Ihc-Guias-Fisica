@@ -1,0 +1,41 @@
+# LaTeX auxiliares
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.dvi
+*.fdb_latexmk
+*.fls
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.xdv
+
+# LaTeX temporales
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+*.nav
+*.snm
+*.vrb
+
+# LaTeX Workshop / VS Code
+*.synctex(busy)
+*.synctex.gz(busy)
+
+# Archivos temporales generales
+*.tmp
+*.bak
+*.swp
+*~
