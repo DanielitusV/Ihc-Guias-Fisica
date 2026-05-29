@@ -8,7 +8,7 @@ Diseño de una interfaz administrativa para el control de distribución presenci
 
 ## Prototipo
 
-El prototipo React vive en la raíz del repositorio.
+El prototipo React vive en la raíz del repositorio. Ejecutar los siguientes comandos para que la aplicación sea inicializado:
 
 ```bash
 bun install
