@@ -18,7 +18,7 @@
 \usepackage{placeins}
 
 \captionsetup{font=footnotesize,labelfont=bf,justification=centering}
-\graphicspath{{images/prototipos/}}
+\graphicspath{{images/prototipos/}{images/wireframes/}}
 
 \setlength{\headheight}{15pt}
 \renewcommand{\familydefault}{\sfdefault}
@@ -116,7 +116,7 @@ La estructura del contenido se organizó según las tareas reales del proceso de
 \begin{center}
 \begin{tabularx}{\textwidth}{|B{4cm}|Y|}
 \hline
-Dashboard & Vista inicial del encargado. Incluye venta rápida por guía, stock actual, últimos registros, resumen de cuentas, ventas de la semana, salida de dinero y llegada de guías. \\
+Dashboard & Vista inicial exclusiva para encargados. Incluye venta rápida por guía, stock actual, últimos registros, resumen de cuentas, ventas de la semana, salida de dinero y llegada de guías. \\
 \hline
 Registrar venta & Flujo corto para seleccionar guía, cantidad y método de pago. La venta actualiza el stock y se refleja en el historial. \\
 \hline
@@ -128,32 +128,24 @@ Cierre de caja & Pantalla de verificación para comparar lo esperado con lo cont
 \hline
 Pedidos & Registra llegadas de guías desde la fotocopiadora, cantidades, costos, estado de pago y comentarios. \\
 \hline
-Consulta estudiante & Vista informativa para compradores. Presenta guía, materia, carreras relacionadas, stock, precio, horario, lugar y formas de pago. \\
+Consulta estudiante & Vista informativa compartida para compradores y encargados. Presenta guía, materia, carreras relacionadas, stock, precio, horario, lugar y formas de pago. \\
 \hline
 \end{tabularx}
 \end{center}
 
 \section{Mapa del sistema}
 
-El mapa del sistema se definió con una navegación lateral permanente para que el encargado pueda moverse entre las secciones sin perder orientación. El Dashboard funciona como punto de entrada y resumen operativo.
+El sitemap organiza la navegación en dos niveles. El Dashboard funciona como centro operativo exclusivo para los encargados del Centro de Estudiantes, porque ahí se concentran las acciones administrativas diarias. En cambio, Consulta estudiante queda como una tarjeta compartida, ya que puede usarse tanto por el estudiante comprador como por el encargado cuando necesita verificar stock, materia o datos de atención.
 
-\begin{center}
-\begin{tabularx}{0.95\textwidth}{|>{\centering\arraybackslash}X|}
-\hline
-Dashboard $\rightarrow$ Registrar venta $\rightarrow$ Dashboard \\
-\hline
-Dashboard $\rightarrow$ Inventario $\rightarrow$ Cierre de caja \\
-\hline
-Dashboard $\rightarrow$ Cuentas $\rightarrow$ Cierre de caja \\
-\hline
-Dashboard $\rightarrow$ Pedidos $\rightarrow$ Inventario \\
-\hline
-Dashboard $\rightarrow$ Consulta estudiante $\rightarrow$ Dashboard \\
-\hline
-\end{tabularx}
-\end{center}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth,height=0.52\textheight,keepaspectratio]{sitemap.png}
+    \caption{Sitemap del prototipo: navegación principal entre Dashboard, ventas, inventario, cuentas, pedidos y consulta de estudiante.}
+\end{figure}
 
-Esta estructura responde a la necesidad de reducir cambios innecesarios de pantalla. Las tareas más frecuentes se ubican cerca del Dashboard, mientras que las tareas de verificación, como el cierre de caja, se mantienen separadas para evitar confusiones.
+La figura resume la estructura de navegación del prototipo y muestra cómo el Dashboard actúa como centro de entrada para tareas administrativas, mientras que la consulta de estudiante permanece accesible como módulo informativo para ambos perfiles.
+
+Esta estructura responde a la necesidad de reducir cambios innecesarios de pantalla. Las tareas más frecuentes se ubican cerca del Dashboard y las funciones compartidas o de consulta quedan separadas para evitar confusiones.
 
 \section{Flujos de navegación}
 
@@ -199,7 +191,7 @@ Este flujo permite actualizar inventario y deuda con proveedor cuando llega un n
 
 \subsection{Flujo 4: consulta del estudiante}
 
-Este flujo responde a la necesidad detectada en los compradores, quienes quieren saber si la guía está disponible antes de acercarse al Centro.
+Este flujo responde a la necesidad detectada en los compradores, quienes quieren saber si la guía está disponible antes de acercarse al Centro. También puede ser usado por el encargado cuando necesita verificar información rápida para orientar una consulta.
 
 \begin{enumerate}
     \item El estudiante abre la vista de consulta.
@@ -215,43 +207,43 @@ El prototipo inicial fue construido como una aplicación navegable en React, per
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{prototipo_dashboard.png}
+    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{wireframe_dashboard.png}
     \caption{Wireframe del Dashboard: resumen operativo, ventas rápidas, cuentas e historial.}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{prototipo_venta.png}
+    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{wireframe_ventas.png}
     \caption{Wireframe de registro de venta: selección de guía, cantidad y método de pago.}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{prototipo_inventario.png}
+    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{wireframe_inventario.png}
     \caption{Wireframe de inventario: guías fiadas, compradas, vendidas, stock restante y estado.}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{prototipo_cuentas.png}
+    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{wireframe_cuentas.png}
     \caption{Wireframe de cuentas: separación entre caja física, cuenta QR y cuenta del encargado.}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{prototipo_cierre.png}
+    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{wireframe_cierre_caja.png}
     \caption{Wireframe de cierre de caja: verificación de guías, dinero físico y pagos QR.}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{prototipo_pedidos.png}
+    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{wireframe_pedidos.png}
     \caption{Wireframe de pedidos: llegadas de guías, costos, estado de pago y deuda.}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{prototipo_consulta.png}
+    \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{wireframe_vista_estudiante.png}
     \caption{Wireframe de consulta para estudiantes: disponibilidad, precio, materia y datos de atención.}
 \end{figure}
 
