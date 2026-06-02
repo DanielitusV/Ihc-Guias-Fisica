@@ -10,6 +10,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.106.2",
     "@tanstack/react-router": "^1.168.25",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
