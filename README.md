@@ -13,8 +13,17 @@ El prototipo React vive en la raíz del repositorio. Ejecutar los siguientes com
 ```bash
 bun install
 bun run dev
-bun run build
 ```
+
+## Aviso
+
+Antes de subir cualquier código ejecutar los siguientes comandos:
+```bash
+bun run build
+bun run lint
+```
+
+***
 
 Servidor local:
 

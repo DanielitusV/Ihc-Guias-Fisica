@@ -1,7 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss" source(none);
-@import "tw-animate-css";
-
 @source "../src";
 
 @custom-variant dark (&:is(.dark *));
@@ -271,6 +269,11 @@
     outline: none;
     border-color: oklch(0.5 0.2 245);
     box-shadow: 0 0 0 2px rgba(95, 165, 225, 0.35);
+  }
+  fieldset:disabled .aero-btn,
+  fieldset:disabled .aero-input {
+    cursor: default;
+    opacity: 1;
   }
   .aero-table {
     border-collapse: separate;

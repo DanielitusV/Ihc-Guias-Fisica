@@ -80,20 +80,22 @@ export function AeroShell({
 
           {/* Content */}
           <main className="bg-[rgba(245,250,255,0.55)] p-5">
-            <header className="mb-4 flex items-end justify-between gap-3 border-b border-[rgba(120,170,220,0.5)] pb-3">
-              <div>
-                <div className="text-[11px] uppercase tracking-wide text-[oklch(0.4_0.1_250)]">
-                  Hoja de control
+            <fieldset disabled className="contents">
+              <header className="mb-4 flex items-end justify-between gap-3 border-b border-[rgba(120,170,220,0.5)] pb-3">
+                <div>
+                  <div className="text-[11px] uppercase tracking-wide text-[oklch(0.4_0.1_250)]">
+                    Hoja de control
+                  </div>
+                  <h1 className="text-2xl font-semibold text-[oklch(0.25_0.12_250)]">{title}</h1>
+                  {subtitle && <p className="text-sm text-[oklch(0.4_0.08_250)]">{subtitle}</p>}
                 </div>
-                <h1 className="text-2xl font-semibold text-[oklch(0.25_0.12_250)]">{title}</h1>
-                {subtitle && <p className="text-sm text-[oklch(0.4_0.08_250)]">{subtitle}</p>}
-              </div>
-              <input
-                className="aero-input w-72 text-sm"
-                placeholder="Buscar venta, guía o movimiento…"
-              />
-            </header>
-            {children}
+                <input
+                  className="aero-input w-72 text-sm"
+                  placeholder="Buscar venta, guía o movimiento…"
+                />
+              </header>
+              {children}
+            </fieldset>
           </main>
         </div>
       </div>

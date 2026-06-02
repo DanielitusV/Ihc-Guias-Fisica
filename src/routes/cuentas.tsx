@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { AeroShell, Panel } from "@/components/aero-shell";
 
 export const Route = createFileRoute("/cuentas")({
@@ -45,7 +44,7 @@ const data = {
 };
 
 function CuentasPage() {
-  const [tab, setTab] = useState<Cuenta>("centro");
+  const tab: Cuenta = "centro";
   const c = data[tab];
 
   return (
@@ -57,7 +56,6 @@ function CuentasPage() {
         {(Object.keys(data) as Cuenta[]).map((k) => (
           <button
             key={k}
-            onClick={() => setTab(k)}
             className={`aero-btn px-4 py-2 text-sm ${tab === k ? "font-semibold shadow-inner" : ""}`}
           >
             {data[k].nombre}
