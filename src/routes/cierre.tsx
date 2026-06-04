@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AeroShell, GuiaBadge, Panel } from "@/components/aero-shell";
+import { fetchGuides, type GuiaTipo } from "@/lib/data";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/cierre")({
@@ -8,7 +9,6 @@ export const Route = createFileRoute("/cierre")({
   head: () => ({ meta: [{ title: "Cierre de caja · CEF Guías" }] }),
 });
 
-type Guia = "Gral" | "I" | "II" | "III";
 type AccountRow = { id: number; name: string };
 type AccountMovement = { account_id: number; amount: number };
 type CashClosure = {
@@ -24,15 +24,17 @@ const accountNames = {
   banco: "Cuenta Banco (QR — Soto)",
 } as const;
 
-// Conteo original de guías según inventario del sistema
-const GUIA_BASE: Record<Guia, number> = { Gral: 6, I: 5, II: 44, III: 50 };
+const GUIDE_TYPES = ["Gral", "I", "II", "III"] as const;
+const EMPTY_GUIDE_COUNTS: Record<GuiaTipo, number> = { Gral: 0, I: 0, II: 0, III: 0 };
 
 const formatMoney = (value: number) =>
   `Bs ${value.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 function CierrePage() {
-  // FIX: conteos almacenan lo que el encargado escribe (no se resetean al re-render)
-  const [counts, setCounts] = useState<Record<Guia, number>>({ ...GUIA_BASE });
+  const [expectedGuides, setExpectedGuides] = useState<Record<GuiaTipo, number>>({
+    ...EMPTY_GUIDE_COUNTS,
+  });
+  const [counts, setCounts] = useState<Record<GuiaTipo, number>>({ ...EMPTY_GUIDE_COUNTS });
   const [contadoCentro, setContadoCentro] = useState(0);
   const [reportadoBanco, setReportadoBanco] = useState(0);
   const [expectedCentro, setExpectedCentro] = useState(0);
@@ -45,6 +47,7 @@ function CierrePage() {
   // FIX: ref para saber si los campos ya fueron tocados por el usuario
   const userEditedCentro = useRef(false);
   const userEditedBanco = useRef(false);
+  const userEditedGuides = useRef(false);
 
   useEffect(() => {
     loadData();
@@ -55,11 +58,22 @@ function CierrePage() {
     setError(null);
     try {
       const names = [accountNames.centro, accountNames.banco];
-      const { data: accounts, error: accountsError } = await supabase
-        .from("accounts")
-        .select("id,name")
-        .in("name", names);
+      const [{ data: accounts, error: accountsError }, guides] = await Promise.all([
+        supabase.from("accounts").select("id,name").in("name", names),
+        fetchGuides(),
+      ]);
       if (accountsError) throw accountsError;
+
+      const guideCounts = guides.reduce<Record<GuiaTipo, number>>(
+        (acc, guide) => ({
+          ...acc,
+          [guide.tipo]: Number(guide.stock) || 0,
+        }),
+        { ...EMPTY_GUIDE_COUNTS },
+      );
+
+      setExpectedGuides(guideCounts);
+      if (!userEditedGuides.current) setCounts(guideCounts);
 
       const accountMap = Object.fromEntries(
         (accounts ?? []).map((a) => [a.name, a.id]),
@@ -123,6 +137,7 @@ function CierrePage() {
       // FIX: resetear flags de edición para que loadData actualice los campos
       userEditedCentro.current = false;
       userEditedBanco.current = false;
+      userEditedGuides.current = false;
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -133,13 +148,13 @@ function CierrePage() {
 
   const guideRows = useMemo(
     () =>
-      (["Gral", "I", "II", "III"] as const).map((tipo) => ({
+      GUIDE_TYPES.map((tipo) => ({
         tipo,
-        esperado: GUIA_BASE[tipo],
+        esperado: expectedGuides[tipo],
         contado: counts[tipo],
-        diff: counts[tipo] - GUIA_BASE[tipo],
+        diff: counts[tipo] - expectedGuides[tipo],
       })),
-    [counts],
+    [counts, expectedGuides],
   );
 
   const difCentro = contadoCentro - expectedCentro;
@@ -195,10 +210,13 @@ function CierrePage() {
                       step={1}
                       value={contado}
                       onChange={(e) =>
-                        setCounts((prev) => ({
-                          ...prev,
-                          [tipo]: Number(e.target.value),
-                        }))
+                        {
+                          userEditedGuides.current = true;
+                          setCounts((prev) => ({
+                            ...prev,
+                            [tipo]: Number(e.target.value),
+                          }));
+                        }
                       }
                       disabled={saving}
                     />
