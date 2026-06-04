@@ -2,10 +2,10 @@ insert into guides (name, subject, price, stock)
 select seed.name, seed.subject, seed.price, seed.stock
 from (
   values
-    ('Fis Gral', 'Fisica General', 30.00, 8),
-    ('Fis I', 'Fisica I', 35.00, 15),
-    ('Fis II', 'Fisica II', 35.00, 42),
-    ('Fis III', 'Fisica III', 40.00, 11)
+    ('Guia Fisica General', 'Fisica General', 35.00, 10),
+    ('Guia Fisica Basica I', 'Fisica Basica I', 35.00, 8),
+    ('Guia Fisica Basica II', 'Fisica Basica II', 35.00, 42),
+    ('Guia Fisica Basica III', 'Fisica Basica III', 35.00, 50)
 ) as seed(name, subject, price, stock)
 where not exists (
   select 1
@@ -23,7 +23,12 @@ on conflict (name) do nothing;
 insert into inventory_movements (guide_id, type, quantity, note)
 select guides.id, 'entrada', guides.stock, 'Carga inicial de prueba'
 from guides
-where guides.name in ('Fis Gral', 'Fis I', 'Fis II', 'Fis III')
+where guides.name in (
+    'Guia Fisica General',
+    'Guia Fisica Basica I',
+    'Guia Fisica Basica II',
+    'Guia Fisica Basica III'
+  )
   and not exists (
     select 1
     from inventory_movements

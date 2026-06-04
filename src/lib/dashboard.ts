@@ -49,7 +49,7 @@ type AccountMovementRow = {
 export async function getDashboardData(): Promise<DashboardData> {
   const [guidesResult, accountsResult, inventoryResult, accountMovementsResult] = await Promise.all(
     [
-      supabase.from("guides").select("id,name,subject,price,stock").order("name"),
+      supabase.from("guides").select("id,name,subject,price,stock").order("id"),
       supabase.from("accounts").select("id,name").order("name"),
       supabase
         .from("inventory_movements")
