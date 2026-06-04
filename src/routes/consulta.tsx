@@ -54,7 +54,7 @@ function ConsultaPage() {
         g.subject.toLowerCase().includes(q) ||
         g.name.toLowerCase().includes(q) ||
         g.careers.toLowerCase().includes(q) ||
-        `fis ${g.type}`.toLowerCase().includes(q),
+        `fis ${g.tipo}`.toLowerCase().includes(q),
     );
   }, [guias, query]);
 
@@ -126,7 +126,7 @@ function ConsultaPage() {
                 {filtradas.map((g) => (
                   <article key={g.id} className="aero-panel flex flex-col p-4">
                     <div className="flex items-center justify-between">
-                      <span className={`aero-badge ${badgeClass[g.type]}`}>Fis {g.type}</span>
+                      <span className={`aero-badge ${badgeClass[g.tipo]}`}>Fis {g.tipo}</span>
                       <span className="font-mono text-sm font-bold text-[oklch(0.3_0.16_245)]">
                         Bs {g.price}
                       </span>

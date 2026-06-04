@@ -34,7 +34,7 @@ type InventoryMovementRow = {
   quantity: number;
   note: string | null;
   created_at: string;
-  guides: { name: string } | null;
+  guides: { name: string } | { name: string }[] | null;
 };
 
 type AccountMovementRow = {
@@ -43,8 +43,13 @@ type AccountMovementRow = {
   amount: number;
   note: string | null;
   created_at: string;
-  accounts: { name: string } | null;
+  accounts: { name: string } | { name: string }[] | null;
 };
+
+function relationName(relation: { name: string } | { name: string }[] | null) {
+  if (Array.isArray(relation)) return relation[0]?.name;
+  return relation?.name;
+}
 
 export async function getDashboardData(): Promise<DashboardData> {
   const [guidesResult, accountsResult, inventoryResult, accountMovementsResult] = await Promise.all(
@@ -87,7 +92,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   const accounts = accountRows.map((account) => {
     const accountName = String(account.name);
     const balance = accountMovementRows
-      .filter((movement) => movement.accounts?.name === accountName)
+      .filter((movement) => relationName(movement.accounts) === accountName)
       .reduce((total, movement) => {
         const amount = Number(movement.amount);
         return movement.type === "salida" || movement.type === "retiro"
@@ -107,7 +112,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       id: `inventory-${movement.id}`,
       date: movement.created_at,
       source: "Inventario" as const,
-      title: movement.guides?.name ?? "Guia sin nombre",
+      title: relationName(movement.guides) ?? "Guia sin nombre",
       detail: `${movement.type} de ${movement.quantity} unidad(es)${
         movement.note ? ` - ${movement.note}` : ""
       }`,
@@ -118,7 +123,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     id: `account-${movement.id}`,
     date: movement.created_at,
     source: "Cuenta" as const,
-    title: movement.accounts?.name ?? "Cuenta sin nombre",
+    title: relationName(movement.accounts) ?? "Cuenta sin nombre",
     detail: `${movement.type} de Bs ${Number(movement.amount).toFixed(2)}${
       movement.note ? ` - ${movement.note}` : ""
     }`,
