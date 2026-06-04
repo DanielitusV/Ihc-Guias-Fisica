@@ -343,3 +343,158 @@
     pointer-events: none;
   }
 }
+
+@media (max-width: 768px) {
+  .min-h-screen.p-4 {
+    padding: 0.75rem;
+  }
+
+  .aero-window {
+    max-width: 100%;
+  }
+
+  .aero-window > .grid {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: auto;
+  }
+
+  .aero-window > .grid > aside {
+    border-right-width: 0;
+    border-bottom-width: 1px;
+  }
+
+  .aero-window > .grid > aside nav {
+    flex-direction: row;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+  }
+
+  .aero-window > .grid > aside nav a,
+  .aero-window > .grid > aside > a {
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+
+  .aero-window > .grid > main {
+    min-width: 0;
+    padding: 1rem;
+  }
+
+  .aero-window > .grid > main > fieldset > header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .aero-window > .grid > main > fieldset > header .aero-input {
+    width: 100%;
+  }
+
+  .aero-window .grid {
+    min-width: 0;
+  }
+
+  .aero-window .grid > * {
+    min-width: 0;
+  }
+
+  .aero-window .grid-cols-12,
+  .aero-window .grid-cols-2,
+  .aero-window [class*="md:grid-cols-3"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aero-window .grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .aero-window [class*="col-span-"] {
+    grid-column: 1 / -1;
+  }
+
+  .aero-panel {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .aero-panel > .p-3 {
+    overflow-x: auto;
+  }
+
+  .aero-table {
+    min-width: 640px;
+  }
+
+  .aero-panel table:not(.aero-table) {
+    min-width: 420px;
+  }
+
+  .aero-table thead th,
+  .aero-table tbody td {
+    white-space: nowrap;
+  }
+
+  .aero-input {
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .aero-btn {
+    min-height: 44px;
+  }
+
+  .aero-window .flex.gap-2 {
+    flex-wrap: wrap;
+  }
+
+  .aero-window .flex.gap-2 > .aero-btn {
+    flex: 1 1 auto;
+  }
+
+  .aero-window footer {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .aero-window footer .aero-btn {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .min-h-screen.p-4 {
+    padding: 0.5rem;
+  }
+
+  .aero-window > .aero-titlebar {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .aero-window > .grid > aside {
+    padding: 0.5rem;
+  }
+
+  .aero-window > .grid > main {
+    padding: 0.75rem;
+  }
+
+  .aero-panel > .p-3 {
+    padding: 0.625rem;
+  }
+
+  .aero-window .grid-cols-4 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aero-table {
+    min-width: 560px;
+  }
+
+  .aero-table thead th,
+  .aero-table tbody td {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
