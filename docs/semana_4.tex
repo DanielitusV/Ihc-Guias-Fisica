@@ -1,0 +1,202 @@
+\documentclass[12pt,letterpaper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=2.54cm]{geometry}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage[hypertexnames=false,bookmarks=false]{hyperref}
+\usepackage{helvet}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{placeins}
+
+\captionsetup{font=footnotesize,labelfont=bf,justification=centering}
+\graphicspath{{docs/images/prototipos/}{images/prototipos/}}
+
+\setlength{\headheight}{15pt}
+\renewcommand{\familydefault}{\sfdefault}
+
+\doublespacing
+\setlength{\parindent}{1.27cm}
+\setlength{\parskip}{0pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+\titleformat{\section}
+{\normalfont\bfseries}
+{\thesection.}{0.5em}{}
+
+\titleformat{\subsection}
+{\normalfont\bfseries}
+{\thesubsection.}{0.5em}{}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=black
+}
+
+\renewcommand{\arraystretch}{1.25}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{B}[1]{>{\bfseries\raggedright\arraybackslash}p{#1}}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+
+    {\large \textbf{UNIVERSIDAD MAYOR DE SAN SIMÓN}}\\
+    {\large \textbf{FACULTAD DE CIENCIAS Y TECNOLOGÍA}}\\
+    {\large \textbf{CARRERA DE INGENIERÍA INFORMÁTICA}}\\[0.5cm]
+
+    \rule{\textwidth}{0.5pt}\\[0.5cm]
+    {\Large \textbf{Trabajo Final -- Semana 4}}\\[0.3cm]
+    {\large \textbf{Prototipo funcional y evaluación}}\\[0.5cm]
+    \rule{\textwidth}{0.5pt}\\[1cm]
+
+    {\large \textbf{Tema}}\\[0.3cm]
+    {\large Sistema de control para la distribución presencial de guías académicas en la Carrera de Física}\\[2cm]
+
+    \begin{flushleft}
+        \textbf{Integrantes:}\\
+        \hspace*{0.5cm}\textbullet\ José Daniel Virreira Rufino\\
+        \hspace*{0.5cm}\textbullet\ Mairon Henry Fernández Orellana\\
+        \hspace*{0.5cm}\textbullet\ Jonas Vidal Zenzano\\
+        \hspace*{0.5cm}\textbullet\ Luis Fernando Cárdenas Morales
+    \end{flushleft}
+
+    \begin{flushleft}
+        \textbf{Grupo:} UXploradores\\
+        \textbf{Materia:} Interacción Humano-Computadora\\
+        \textbf{Docente:} Mgr. Corina Flores Villarroel\\
+        \textbf{Gestión:} I-2026
+    \end{flushleft}
+
+    \vfill
+
+    {\small Cochabamba -- Bolivia}\\
+\end{titlepage}
+
+El presente informe corresponde a la Semana 4 del proyecto. En esta etapa se desarrolló el prototipo funcional de media/alta fidelidad y se preparó su evaluación mediante pruebas de usabilidad y revisión heurística. A diferencia de informes anteriores, este documento se enfoca solamente en el funcionamiento del prototipo, los problemas encontrados y las recomendaciones de mejora.
+
+\section{Objetivo de la semana}
+
+Desarrollar una versión funcional inicial del prototipo y evaluarla para identificar problemas de uso antes de la etapa de corrección.
+
+\section{Prototipo funcional}
+
+El prototipo fue implementado como una aplicación web conectada a Supabase. Las pantallas principales ya permiten trabajar con datos reales del sistema.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|B{4cm}|Y|}
+\hline
+Pantalla & Funcionalidad principal \\
+\hline
+Dashboard & Muestra resumen de stock, cuentas y movimientos recientes. \\
+\hline
+Registrar entrega & Permite seleccionar guía, cantidad y método; descuenta stock y registra movimiento. \\
+\hline
+Inventario & Presenta stock y movimientos por tipo de guía. \\
+\hline
+Consulta estudiante & Muestra guía, materia, precio y disponibilidad. \\
+\hline
+Cuentas & Registra ingresos, salidas y retiros entre cuentas. \\
+\hline
+Pedidos & Registra llegada de guías y actualiza inventario. \\
+\hline
+Cierre de caja & Compara montos y stock esperado contra valores contados. \\
+\hline
+\end{tabularx}
+\end{center}
+
+\section{Evidencia del prototipo}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth,height=0.45\textheight,keepaspectratio]{prototipo_dashboard.png}
+    \caption{Dashboard funcional conectado a datos reales.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth,height=0.45\textheight,keepaspectratio]{prototipo_venta.png}
+    \caption{Registro de entrega con selección de guía, cantidad y método.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth,height=0.45\textheight,keepaspectratio]{prototipo_cierre.png}
+    \caption{Cierre de caja con comparación de valores esperados y contados.}
+\end{figure}
+
+\FloatBarrier
+
+\section{Prueba de usabilidad}
+
+La prueba se aplicó con usuarios representativos mediante tareas breves. El objetivo fue observar si las acciones principales podían completarse sin explicación extensa.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|B{3cm}|B{3cm}|Y|B{2.4cm}|}
+\hline
+Participante & Perfil & Tarea evaluada & Resultado \\
+\hline
+P1 & Encargado & Registrar una entrega de guía. & Pendiente \\
+\hline
+P2 & Estudiante & Consultar disponibilidad y precio. & Pendiente \\
+\hline
+P3 & Encargado & Revisar cierre o movimiento de cuenta. & Pendiente \\
+\hline
+\end{tabularx}
+\end{center}
+
+\section{Evaluación heurística}
+
+También se realizó una revisión rápida del prototipo con criterios de usabilidad. Se priorizaron aspectos visibles durante el uso del sistema.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|B{4cm}|Y|B{2.5cm}|}
+\hline
+Criterio & Observación & Severidad \\
+\hline
+Visibilidad del estado & El sistema muestra estados de carga, error o confirmación en las pantallas principales. & Baja \\
+\hline
+Prevención de errores & Algunas acciones validan cantidad, stock y montos antes de guardar. & Media \\
+\hline
+Consistencia & La navegación y los paneles mantienen una estructura similar en todo el sistema. & Baja \\
+\hline
+Reconocimiento antes que memoria & Las guías se muestran con nombre, materia, precio y stock para evitar que el usuario memorice datos. & Baja \\
+\hline
+\end{tabularx}
+\end{center}
+
+\section{Problemas encontrados y recomendaciones}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{|B{1.5cm}|Y|B{2.3cm}|Y|}
+\hline
+Código & Problema encontrado & Severidad & Recomendación \\
+\hline
+P-01 & Pendiente de registrar después de la prueba de usabilidad. & Pendiente & Pendiente. \\
+\hline
+P-02 & Pendiente de registrar después de la prueba de usabilidad. & Pendiente & Pendiente. \\
+\hline
+P-03 & Pendiente de registrar después de la prueba de usabilidad. & Pendiente & Pendiente. \\
+\hline
+\end{tabularx}
+\end{center}
+
+\section{Conclusión}
+
+El prototipo cumple con el objetivo de la Semana 4 porque ya permite ejecutar los flujos principales con datos reales. La evaluación permitirá priorizar correcciones concretas para la siguiente etapa, especialmente en claridad de mensajes, prevención de errores y ajustes menores de interacción.
+
+\end{document}
