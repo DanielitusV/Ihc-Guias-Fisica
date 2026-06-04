@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AeroShell, Panel } from "@/components/aero-shell";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/cuentas")({
   component: CuentasPage,
@@ -7,114 +9,404 @@ export const Route = createFileRoute("/cuentas")({
 });
 
 type Cuenta = "centro" | "banco" | "encargado";
+type AccountRow = { id: number; name: string };
+type AccountMovement = {
+  id: number;
+  account_id: number;
+  type: "ingreso" | "salida" | "retiro";
+  amount: number;
+  note: string | null;
+  created_at: string;
+};
+type Mov = { fecha: string; concepto: string; monto: number };
+type AccountState = {
+  id: number;
+  nombre: string;
+  sub: string;
+  saldo: number;
+  movs: Mov[];
+};
 
-const data = {
-  centro: {
-    nombre: "Caja del Centro",
-    sub: "Dinero físico en el centro",
-    saldo: "Bs 231.50",
-    movs: [
-      { fecha: "26/05", concepto: "Venta Fis I (efectivo)", monto: "+35.00" },
-      { fecha: "26/05", concepto: "Venta Fis II (efectivo)", monto: "+35.00" },
-      { fecha: "26/05", concepto: "Retiro encargado", monto: "−500.00" },
-      { fecha: "25/05", concepto: "Pago agua", monto: "−45.00" },
-    ],
-  },
-  banco: {
-    nombre: "Cuenta Banco (QR — Soto)",
-    sub: "Pagos por QR de estudiantes",
-    saldo: "Bs 9 905.00",
-    movs: [
-      { fecha: "26/05", concepto: "Venta Fis I (QR)", monto: "+35.00" },
-      { fecha: "26/05", concepto: "Venta Fis Gral (QR)", monto: "+35.00" },
-      { fecha: "25/05", concepto: "Pago internet", monto: "−120.00" },
-      { fecha: "24/05", concepto: "Compra QR (mandado)", monto: "−80.00" },
-    ],
-  },
-  encargado: {
-    nombre: "Cuenta Encargado",
-    sub: "Dinero retirado del centro para pagar a fotocopiadora",
-    saldo: "Bs 1 240.00",
-    movs: [
-      { fecha: "26/05", concepto: "Retiro desde centro", monto: "+500.00" },
-      { fecha: "20/05", concepto: "Pago fotocopiadora (deuda −1 200)", monto: "−1 200.00" },
-      { fecha: "18/05", concepto: "Repuesto impresora", monto: "−85.00" },
-    ],
-  },
+const accountNames: Record<Cuenta, string> = {
+  centro: "Caja del Centro",
+  banco: "Cuenta Banco (QR — Soto)",
+  encargado: "Cuenta Encargado",
+};
+
+const accountSubs: Record<Cuenta, string> = {
+  centro: "Dinero físico en el centro",
+  banco: "Pagos por QR de estudiantes",
+  encargado: "Dinero retirado del centro para pagar a fotocopiadora",
+};
+
+const createEmptyAccounts = (): Record<Cuenta, AccountState> => ({
+  centro: { id: 0, nombre: accountNames.centro, sub: accountSubs.centro, saldo: 0, movs: [] },
+  banco: { id: 0, nombre: accountNames.banco, sub: accountSubs.banco, saldo: 0, movs: [] },
+  encargado: { id: 0, nombre: accountNames.encargado, sub: accountSubs.encargado, saldo: 0, movs: [] },
+});
+
+const formatMoney = (value: number) =>
+  `Bs ${value.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const formatMonto = (value: number) => {
+  const sign = value >= 0 ? "+" : "−";
+  return `${sign}${Math.abs(value).toFixed(2)}`;
+};
+
+const formatDate = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}`;
+};
+
+// FIX: hace upsert seguro y re-lee para garantizar IDs reales
+async function ensureAccounts(): Promise<AccountRow[]> {
+  const names = Object.values(accountNames);
+
+  let { data: existing, error: e1 } = await supabase
+    .from<AccountRow>("accounts")
+    .select("id,name")
+    .in("name", names);
+  if (e1) throw e1;
+
+  const found = existing ?? [];
+  const missing = names.filter((n) => !found.some((a) => a.name === n));
+
+  if (missing.length > 0) {
+    // Insertar una por una para evitar que un conflicto cancele todo el batch
+    for (const name of missing) {
+      const { error: ei } = await supabase
+        .from<AccountRow>("accounts")
+        .insert({ name } as any);
+      // ignorar error de duplicate key (code 23505)
+      if (ei && ei.code !== "23505") throw ei;
+    }
+    // Re-leer para obtener los IDs reales (incluye los recién creados y los ya existentes)
+    const { data: refetch, error: e2 } = await supabase
+      .from<AccountRow>("accounts")
+      .select("id,name")
+      .in("name", names);
+    if (e2) throw e2;
+    return refetch ?? found;
+  }
+
+  return found;
+}
+
+const buildAccountState = (
+  accounts: AccountRow[],
+  movements: AccountMovement[],
+): Record<Cuenta, AccountState> => {
+  const state = createEmptyAccounts();
+
+  accounts.forEach((account) => {
+    const key = (Object.keys(accountNames) as Cuenta[]).find(
+      (k) => account.name === accountNames[k],
+    );
+    if (key) state[key].id = account.id;
+  });
+
+  movements.forEach((movement) => {
+    const entry = (Object.entries(state) as [Cuenta, AccountState][]).find(
+      ([, account]) => account.id === movement.account_id,
+    );
+    if (!entry) return;
+    const [, account] = entry;
+    account.movs.push({
+      fecha: formatDate(movement.created_at),
+      concepto: movement.note || movement.type,
+      monto: Number(movement.amount),
+    });
+    account.saldo += Number(movement.amount);
+  });
+
+  return state;
 };
 
 function CuentasPage() {
-  const tab: Cuenta = "centro";
-  const c = data[tab];
+  const [tab, setTab] = useState<Cuenta>("centro");
+  const [accounts, setAccounts] = useState<Record<Cuenta, AccountState>>(createEmptyAccounts());
+  const [tipo, setTipo] = useState<"entrada" | "salida" | "retiro">("entrada");
+  const [monto, setMonto] = useState("");
+  const [concepto, setConcepto] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const currentAccount = accounts[tab];
+
+  useEffect(() => {
+    loadAccounts();
+  }, []);
+
+  const loadAccounts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const existingAccounts = await ensureAccounts();
+
+      const accountIds = existingAccounts.map((a) => a.id).filter(Boolean);
+      const { data: movements, error: movementsError } = await supabase
+        .from<AccountMovement>("account_movements")
+        .select("id,account_id,type,amount,note,created_at")
+        .in("account_id", accountIds)
+        .order("created_at", { ascending: false });
+
+      if (movementsError) throw movementsError;
+
+      setAccounts(buildAccountState(existingAccounts, movements ?? []));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setAccounts(createEmptyAccounts());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    const parsed = Number(monto.replace(",", "."));
+    if (Number.isNaN(parsed) || parsed <= 0) {
+      setError("El monto debe ser mayor a 0.");
+      return;
+    }
+    if (!concepto.trim()) {
+      setError("El concepto es obligatorio.");
+      return;
+    }
+    if (!currentAccount.id) {
+      setError("No se encontró la cuenta seleccionada. Recargá la página.");
+      return;
+    }
+    if (tipo === "retiro" && tab !== "centro") {
+      setError("El retiro solo se realiza desde Caja del Centro.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      const payload =
+        tipo === "retiro"
+          ? [
+              {
+                account_id: currentAccount.id,
+                type: "retiro",
+                amount: -parsed,
+                note: concepto.trim(),
+              },
+              {
+                account_id: accounts.encargado.id,
+                type: "ingreso",
+                amount: parsed,
+                note: `Retiro desde centro · ${concepto.trim()}`,
+              },
+            ]
+          : [
+              {
+                account_id: currentAccount.id,
+                type: tipo === "entrada" ? "ingreso" : "salida",
+                amount: tipo === "salida" ? -parsed : parsed,
+                note: concepto.trim(),
+              },
+            ];
+
+      const { error: insertError } = await supabase.from("account_movements").insert(payload);
+      if (insertError) throw insertError;
+
+      setMonto("");
+      setConcepto("");
+      // FIX: resetear tipo a "entrada" después de un retiro para evitar confusión
+      if (tipo === "retiro") setTipo("entrada");
+
+      await loadAccounts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      // FIX: saving siempre se resetea, incluso si hubo error
+      setSaving(false);
+    }
+  };
+
+  // FIX: al cambiar de tab, resetear tipo a "entrada" si el nuevo tab no es centro
+  const handleSwitchTab = (k: Cuenta) => {
+    setTab(k);
+    setError(null);
+    if (k !== "centro" && tipo === "retiro") setTipo("entrada");
+  };
+
+  const handleRetiro = () => {
+    setTipo("retiro");
+    setConcepto("Retiro a encargado");
+  };
 
   return (
     <AeroShell
       title="Cuentas (3)"
-      subtitle="Cada movimiento se registra en una sola cuenta. Conversiones físico↔QR mueven dinero entre cuentas."
+      subtitle="Cada movimiento se registra en una sola cuenta. Los retiros mueven dinero Centro → Encargado."
     >
       <div className="mb-3 flex gap-1">
-        {(Object.keys(data) as Cuenta[]).map((k) => (
+        {(Object.keys(accounts) as Cuenta[]).map((k) => (
           <button
             key={k}
+            onClick={() => handleSwitchTab(k)}
             className={`aero-btn px-4 py-2 text-sm ${tab === k ? "font-semibold shadow-inner" : ""}`}
           >
-            {data[k].nombre}
+            {accounts[k].nombre}
           </button>
         ))}
       </div>
 
       <div className="grid grid-cols-12 gap-4">
-        <Panel title={c.nombre} hint={c.sub} className="col-span-8">
-          <table className="aero-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Concepto</th>
-                <th className="text-right">Monto (Bs)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {c.movs.map((m, i) => (
-                <tr key={i}>
-                  <td className="font-mono text-xs">{m.fecha}</td>
-                  <td>{m.concepto}</td>
-                  <td
-                    className={`text-right font-mono font-semibold ${
-                      m.monto.startsWith("+")
-                        ? "text-[oklch(0.45_0.15_145)]"
-                        : "text-[oklch(0.5_0.2_25)]"
-                    }`}
-                  >
-                    {m.monto}
-                  </td>
+        <Panel title={currentAccount.nombre} hint={currentAccount.sub} className="col-span-8">
+          {loading ? (
+            <div className="p-8 text-center text-sm text-[oklch(0.35_0.12_250)]">
+              Cargando movimientos…
+            </div>
+          ) : (
+            <table className="aero-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Concepto</th>
+                  <th className="text-right">Monto (Bs)</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {currentAccount.movs.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="py-4 text-center text-sm text-[oklch(0.45_0.08_250)]">
+                      Sin movimientos registrados
+                    </td>
+                  </tr>
+                ) : (
+                  currentAccount.movs.map((m, i) => (
+                    <tr key={i}>
+                      <td className="font-mono text-xs">{m.fecha}</td>
+                      <td>{m.concepto}</td>
+                      <td
+                        className={`text-right font-mono font-semibold ${
+                          m.monto >= 0
+                            ? "text-[oklch(0.45_0.15_145)]"
+                            : "text-[oklch(0.5_0.2_25)]"
+                        }`}
+                      >
+                        {formatMonto(m.monto)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </Panel>
 
         <div className="col-span-4 space-y-4">
           <Panel title="Saldo actual">
-            <div className="text-center py-2">
+            <div className="py-2 text-center">
               <div className="text-[11px] uppercase tracking-wide text-[oklch(0.45_0.08_250)]">
                 Disponible
               </div>
-              <div className="font-mono text-3xl font-bold text-[oklch(0.3_0.16_245)]">
-                {c.saldo}
+              <div
+                className={`font-mono text-3xl font-bold ${
+                  currentAccount.saldo < 0
+                    ? "text-[oklch(0.5_0.2_25)]"
+                    : "text-[oklch(0.3_0.16_245)]"
+                }`}
+              >
+                {formatMoney(currentAccount.saldo)}
               </div>
             </div>
           </Panel>
 
-          <Panel title="Acciones">
+          <Panel title="Registrar movimiento">
+            <div className="space-y-3 text-sm">
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-[oklch(0.45_0.08_250)]">
+                  Tipo
+                </span>
+                <select
+                  value={tipo}
+                  onChange={(e) => setTipo(e.target.value as "entrada" | "salida" | "retiro")}
+                  className="aero-input mt-1 w-full"
+                  disabled={saving}
+                >
+                  <option value="entrada">Ingreso</option>
+                  <option value="salida">Salida</option>
+                  {/* FIX: retiro solo disponible en tab centro */}
+                  {tab === "centro" && (
+                    <option value="retiro">Retiro encargado</option>
+                  )}
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-[oklch(0.45_0.08_250)]">
+                  Monto
+                </span>
+                <input
+                  value={monto}
+                  onChange={(e) => setMonto(e.target.value)}
+                  placeholder="0.00"
+                  className="aero-input mt-1 w-full text-right"
+                  disabled={saving}
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-[oklch(0.45_0.08_250)]">
+                  Concepto
+                </span>
+                <input
+                  value={concepto}
+                  onChange={(e) => setConcepto(e.target.value)}
+                  placeholder="Descripción breve"
+                  className="aero-input mt-1 w-full"
+                  disabled={saving}
+                  maxLength={120}
+                />
+              </label>
+              <button
+                onClick={handleSubmit}
+                className="aero-btn aero-btn-confirm w-full py-2 text-sm font-semibold"
+                disabled={saving}
+              >
+                {saving ? "Guardando…" : "Guardar movimiento"}
+              </button>
+              {error && (
+                <div className="rounded border border-[oklch(0.8_0.1_25)] bg-[oklch(0.97_0.03_25)] px-3 py-2 text-sm text-[oklch(0.5_0.2_25)]">
+                  {error}
+                </div>
+              )}
+            </div>
+          </Panel>
+
+          <Panel title="Acciones rápidas">
             <div className="space-y-2">
-              <button className="aero-btn aero-btn-confirm w-full py-2 text-sm font-semibold">
+              <button
+                onClick={() => setTipo("entrada")}
+                className="aero-btn w-full py-2 text-sm"
+                disabled={saving}
+              >
                 + Registrar entrada
               </button>
-              <button className="aero-btn w-full py-2 text-sm">− Registrar salida</button>
-              <button className="aero-btn w-full py-2 text-sm">⇄ Conversión Físico ↔ QR</button>
-              {tab === "encargado" && (
-                <button className="aero-btn aero-btn-confirm w-full py-2 text-sm font-semibold">
-                  Pagar deuda fotocopiadora
+              <button
+                onClick={() => setTipo("salida")}
+                className="aero-btn w-full py-2 text-sm"
+                disabled={saving}
+              >
+                − Registrar salida
+              </button>
+              {tab === "centro" && (
+                <button
+                  onClick={handleRetiro}
+                  className="aero-btn w-full py-2 text-sm"
+                  disabled={saving}
+                >
+                  ⇄ Retiro encargado
                 </button>
               )}
             </div>
@@ -122,13 +414,13 @@ function CuentasPage() {
 
           {tab === "encargado" && (
             <Panel title="Deuda fotocopiadora">
-              <div className="text-center py-2">
+              <div className="py-2 text-center">
                 <div className="text-[11px] uppercase tracking-wide">Pendiente</div>
                 <div className="font-mono text-2xl font-bold text-[oklch(0.5_0.2_25)]">
                   Bs 27 243.68
                 </div>
                 <p className="mt-1 text-[11px] text-[oklch(0.45_0.08_250)]">
-                  Al pagar disminuye automáticamente.
+                  Al pagar, registrar como salida en Encargado.
                 </p>
               </div>
             </Panel>
