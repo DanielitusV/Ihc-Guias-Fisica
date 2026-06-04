@@ -18,6 +18,18 @@ type OrderRecord = {
   created_at: string;
 };
 
+type OrderMovementRecord = {
+  id: number;
+  guide_id: number;
+  quantity: number;
+  note: string | null;
+  created_at: string;
+  guides:
+    | Pick<GuideRecord, "id" | "name" | "subject" | "price">
+    | Pick<GuideRecord, "id" | "name" | "subject" | "price">[]
+    | null;
+};
+
 type GuideRecord = {
   id: number;
   name: string;
@@ -80,6 +92,11 @@ function inferGuideTipoFromOrder(order: OrderRecord): GuiaTipo {
   return "Gral";
 }
 
+function getOrderIdFromMovement(note: string | null) {
+  const match = note?.match(/Pedido #(\d+)/i);
+  return match ? Number(match[1]) : null;
+}
+
 function toNumber(value: number | string | null | undefined) {
   return Number(value) || 0;
 }
@@ -92,16 +109,59 @@ function formatOrderDate(value: string) {
   }).format(new Date(value));
 }
 
-function toPedidoRow(order: OrderRecord): PedidoRow {
-  const total = toNumber(order.total_cost);
+function relationGuide(
+  relation: Pick<GuideRecord, "id" | "name" | "subject" | "price"> | Pick<
+    GuideRecord,
+    "id" | "name" | "subject" | "price"
+  >[] | null,
+) {
+  if (Array.isArray(relation)) return relation[0] ?? null;
+  return relation;
+}
 
+function toPedidoRows(order: OrderRecord, movements: OrderMovementRecord[]): PedidoRow[] {
+  const total = toNumber(order.total_cost);
+  const orderMovements = movements.filter((movement) => getOrderIdFromMovement(movement.note) === order.id);
+
+  if (orderMovements.length === 0) {
+    return [
+      {
+        id: order.id,
+        fecha: formatOrderDate(order.created_at),
+        tipo: inferGuideTipoFromOrder(order),
+        cant: 0,
+        precio: 0,
+        total,
+        pagado: normalizeText(order.status).includes("PAGADO"),
+        com: order.supplier,
+      },
+    ];
+  }
+
+  return orderMovements.map((movement) => {
+    const guide = relationGuide(movement.guides);
+    const price = toNumber(guide?.price);
+    return {
+      id: movement.id,
+      fecha: formatOrderDate(movement.created_at || order.created_at),
+      tipo: guide ? getGuideTipo(guide) : inferGuideTipoFromOrder(order),
+      cant: Number(movement.quantity) || 0,
+      precio: price,
+      total: price * (Number(movement.quantity) || 0),
+      pagado: normalizeText(order.status).includes("PAGADO"),
+      com: order.supplier,
+    };
+  });
+}
+
+function toPedidoSummaryRow(order: OrderRecord): PedidoRow {
   return {
-    id: order.id,
+    id: -order.id,
     fecha: formatOrderDate(order.created_at),
     tipo: inferGuideTipoFromOrder(order),
     cant: 0,
     precio: 0,
-    total,
+    total: toNumber(order.total_cost),
     pagado: normalizeText(order.status).includes("PAGADO"),
     com: order.supplier,
   };
@@ -122,7 +182,7 @@ function PedidosPage() {
     setLoading(true);
     setError(null);
 
-    const [ordersResponse, guidesResponse] = await Promise.all([
+    const [ordersResponse, guidesResponse, movementsResponse] = await Promise.all([
       supabase
         .from("orders")
         .select("id, supplier, status, total_cost, created_at")
@@ -131,6 +191,11 @@ function PedidosPage() {
         .from("guides")
         .select("id, name, subject, price, stock")
         .order("id", { ascending: true }),
+      supabase
+        .from("inventory_movements")
+        .select("id, guide_id, quantity, note, created_at, guides(id, name, subject, price)")
+        .eq("type", "entrada")
+        .order("created_at", { ascending: false }),
     ]);
 
     if (ordersResponse.error) {
@@ -147,7 +212,20 @@ function PedidosPage() {
       return;
     }
 
-    setPedidos(((ordersResponse.data ?? []) as OrderRecord[]).map(toPedidoRow));
+    if (movementsResponse.error) {
+      setPedidos([]);
+      setError(movementsResponse.error.message);
+      setLoading(false);
+      return;
+    }
+
+    const movements = (movementsResponse.data ?? []) as OrderMovementRecord[];
+    const rows = ((ordersResponse.data ?? []) as OrderRecord[]).flatMap((order) => {
+      const detailRows = toPedidoRows(order, movements);
+      return detailRows.length > 1 ? [toPedidoSummaryRow(order), ...detailRows] : detailRows;
+    });
+
+    setPedidos(rows);
     setGuides((guidesResponse.data ?? []) as GuideRecord[]);
     setLoading(false);
   }, []);
@@ -186,6 +264,8 @@ function PedidosPage() {
       .eq("id", guideId);
 
     if (updateError) throw updateError;
+
+    return Number(data?.stock) || 0;
   }
 
   async function handleRegister() {
@@ -218,6 +298,10 @@ function PedidosPage() {
 
     setSaving(true);
 
+    let createdOrderId: number | null = null;
+    let insertedMovements = false;
+    const stockBackups: Array<{ guideId: number; stock: number }> = [];
+
     try {
       const createdAt = new Date(`${fecha}T12:00:00`).toISOString();
       const supplier = comentario.trim() || "Fotocopiadora";
@@ -238,6 +322,7 @@ function PedidosPage() {
         .single();
 
       if (orderError) throw orderError;
+      createdOrderId = order.id;
 
       const note = `Pedido #${order.id}${comentario.trim() ? `: ${comentario.trim()}` : ""}`;
 
@@ -262,18 +347,34 @@ function PedidosPage() {
         .insert(movements);
 
       if (movementsError) throw movementsError;
+      insertedMovements = true;
 
       for (const arrival of arrivals) {
         const guide = guidesByTipo.get(arrival.tipo);
 
         if (guide) {
-          await updateGuideStock(guide.id, arrival.quantity);
+          const previousStock = await updateGuideStock(guide.id, arrival.quantity);
+          stockBackups.push({ guideId: guide.id, stock: previousStock });
         }
       }
 
       resetForm();
       await loadPedidos();
     } catch (requestError) {
+      await Promise.all(
+        stockBackups.map((backup) =>
+          supabase.from("guides").update({ stock: backup.stock }).eq("id", backup.guideId),
+        ),
+      );
+
+      if (insertedMovements && createdOrderId !== null) {
+        await supabase.from("inventory_movements").delete().ilike("note", `Pedido #${createdOrderId}%`);
+      }
+
+      if (createdOrderId !== null) {
+        await supabase.from("orders").delete().eq("id", createdOrderId);
+      }
+
       setFormError(requestError instanceof Error ? requestError.message : "No se pudo registrar.");
     } finally {
       setSaving(false);
