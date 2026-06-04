@@ -1,44 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { fetchGuides, type Guide, type GuiaTipo } from "@/lib/data";
 
 export const Route = createFileRoute("/consulta")({
   component: ConsultaPage,
   head: () => ({ meta: [{ title: "Consulta de guías · Centro de Estudiantes de Física" }] }),
 });
 
-const guias = [
-  {
-    tipo: "Gral",
-    materia: "Física General",
-    carreras: "Civil, Industrial, Química, Alimentos, Mecánica, Agroindustrial",
-    stock: 6,
-    precio: 35,
-    badge: "badge-gral",
-  },
-  {
-    tipo: "I",
-    materia: "Física Básica I",
-    carreras: "Informática, Sistemas, Electrónica, Eléctrica, Lic. Física, Lic. Matemática",
-    stock: 5,
-    precio: 35,
-    badge: "badge-fis1",
-  },
-  {
-    tipo: "II",
-    materia: "Física Básica II",
-    carreras: "Informática, Sistemas, Electrónica, Eléctrica, Lic. Física, Lic. Matemática",
-    stock: 44,
-    precio: 35,
-    badge: "badge-fis2",
-  },
-  {
-    tipo: "III",
-    materia: "Física Básica III",
-    carreras: "Electrónica, Eléctrica, Lic. Física",
-    stock: 50,
-    precio: 35,
-    badge: "badge-fis3",
-  },
-];
+const badgeClass: Record<GuiaTipo, string> = {
+  Gral: "badge-gral",
+  I: "badge-fis1",
+  II: "badge-fis2",
+  III: "badge-fis3",
+};
 
 const horarios = [
   { dia: "Lunes", hora: "10:00 – 14:00", abierto: true },
@@ -51,6 +25,39 @@ const horarios = [
 ];
 
 function ConsultaPage() {
+  const [guias, setGuias] = useState<Guide[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      setGuias(await fetchGuides());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al cargar guías");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  const filtradas = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return guias;
+    return guias.filter(
+      (g) =>
+        g.subject.toLowerCase().includes(q) ||
+        g.name.toLowerCase().includes(q) ||
+        g.careers.toLowerCase().includes(q) ||
+        `fis ${g.type}`.toLowerCase().includes(q),
+    );
+  }, [guias, query]);
+
   return (
     <div className="min-h-screen p-4 md:p-6">
       <div className="mx-auto max-w-6xl aero-window overflow-hidden">
@@ -85,56 +92,76 @@ function ConsultaPage() {
             </div>
           </header>
 
-          {/* GRUPO 1 — Guías (proximidad + similitud) */}
+          {/* GRUPO 1 — Guías */}
           <section className="border-t border-[rgba(120,170,220,0.45)] pt-5">
-            <div className="mb-3 flex items-baseline justify-between">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[oklch(0.3_0.1_250)]">
                 ¿Qué guía me toca?
               </h2>
-              <span className="text-[11px] text-[oklch(0.45_0.08_250)]">
-                Identifica tu guía por carrera
-              </span>
+              <input
+                className="aero-input w-full max-w-xs text-sm md:w-72"
+                placeholder="Buscar por materia o carrera…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-5 xl:grid-cols-4">
-              {guias.map((g) => (
-                <article key={g.tipo} className="aero-panel flex flex-col p-4">
-                  <div className="flex items-center justify-between">
-                    <span className={`aero-badge ${g.badge}`}>Fis {g.tipo}</span>
-                    <span className="font-mono text-sm font-bold text-[oklch(0.3_0.16_245)]">
-                      Bs {g.precio}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 text-sm font-semibold text-[oklch(0.25_0.12_250)]">
-                    {g.materia}
-                  </div>
-                  <div className="mt-1 text-xs">
-                    {g.stock > 10 ? (
-                      <span className="font-semibold text-[oklch(0.4_0.15_145)]">
-                        ✓ Disponible ({g.stock} en stock)
+            {loading ? (
+              <div className="py-10 text-center text-sm text-[oklch(0.45_0.08_250)]">
+                Cargando guías…
+              </div>
+            ) : error ? (
+              <div className="space-y-3 py-8 text-center">
+                <p className="text-sm text-[oklch(0.5_0.2_25)]">⚠ {error}</p>
+                <button onClick={() => void load()} className="aero-btn px-4 py-2 text-sm">
+                  Reintentar
+                </button>
+              </div>
+            ) : filtradas.length === 0 ? (
+              <div className="py-10 text-center text-sm text-[oklch(0.45_0.08_250)]">
+                No se encontraron guías para “{query}”.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-5 xl:grid-cols-4">
+                {filtradas.map((g) => (
+                  <article key={g.id} className="aero-panel flex flex-col p-4">
+                    <div className="flex items-center justify-between">
+                      <span className={`aero-badge ${badgeClass[g.type]}`}>Fis {g.type}</span>
+                      <span className="font-mono text-sm font-bold text-[oklch(0.3_0.16_245)]">
+                        Bs {g.price}
                       </span>
-                    ) : g.stock > 0 ? (
-                      <span className="font-semibold text-[oklch(0.5_0.18_60)]">
-                        ⚠ Quedan pocas ({g.stock})
-                      </span>
-                    ) : (
-                      <span className="font-semibold text-[oklch(0.5_0.2_25)]">✗ Sin stock</span>
-                    )}
-                  </div>
-
-                  <div className="mt-4 border-t border-[rgba(120,170,220,0.35)] pt-3 text-[11px] leading-relaxed text-[oklch(0.4_0.08_250)]">
-                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[oklch(0.45_0.1_250)]">
-                      Carreras que la cursan
                     </div>
-                    {g.carreras}
-                  </div>
-                </article>
-              ))}
-            </div>
+
+                    <div className="mt-3 text-sm font-semibold text-[oklch(0.25_0.12_250)]">
+                      {g.subject}
+                    </div>
+                    <div className="mt-1 text-xs">
+                      {g.stock > 10 ? (
+                        <span className="font-semibold text-[oklch(0.4_0.15_145)]">
+                          ✓ Disponible ({g.stock} en stock)
+                        </span>
+                      ) : g.stock > 0 ? (
+                        <span className="font-semibold text-[oklch(0.5_0.18_60)]">
+                          ⚠ Quedan pocas ({g.stock})
+                        </span>
+                      ) : (
+                        <span className="font-semibold text-[oklch(0.5_0.2_25)]">✗ Sin stock</span>
+                      )}
+                    </div>
+
+                    <div className="mt-4 border-t border-[rgba(120,170,220,0.35)] pt-3 text-[11px] leading-relaxed text-[oklch(0.4_0.08_250)]">
+                      <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[oklch(0.45_0.1_250)]">
+                        Carreras que la cursan
+                      </div>
+                      {g.careers}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
 
-          {/* GRUPO 2 — Información logística (proximidad) */}
+          {/* GRUPO 2 — Información logística */}
           <section className="mt-7 border-t border-[rgba(120,170,220,0.45)] pt-5">
             <div className="mb-3 flex items-baseline justify-between">
               <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[oklch(0.3_0.1_250)]">

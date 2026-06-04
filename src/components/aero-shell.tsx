@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: "▦" },
-  { to: "/venta", label: "Registrar venta", icon: "🛒" },
+  { to: "/venta", label: "Registrar entrega", icon: "🛒" },
   { to: "/inventario", label: "Inventario", icon: "📦" },
   { to: "/cuentas", label: "Cuentas (3)", icon: "💳" },
   { to: "/cierre", label: "Cierre de caja", icon: "🧮" },
@@ -14,10 +14,12 @@ export function AeroShell({
   title,
   subtitle,
   children,
+  interactive = false,
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
+  interactive?: boolean;
 }) {
   const loc = useLocation();
   return (
@@ -80,7 +82,7 @@ export function AeroShell({
 
           {/* Content */}
           <main className="bg-[rgba(245,250,255,0.55)] p-5">
-            <fieldset disabled className="contents">
+            <fieldset disabled={!interactive} className="contents">
               <header className="mb-4 flex items-end justify-between gap-3 border-b border-[rgba(120,170,220,0.5)] pb-3">
                 <div>
                   <div className="text-[11px] uppercase tracking-wide text-[oklch(0.4_0.1_250)]">
