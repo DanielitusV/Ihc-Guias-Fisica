@@ -65,8 +65,8 @@ const formatDate = (value: string) => {
 async function ensureAccounts(): Promise<AccountRow[]> {
   const names = Object.values(accountNames);
 
-  let { data: existing, error: e1 } = await supabase
-    .from<AccountRow>("accounts")
+  const { data: existing, error: e1 } = await supabase
+    .from("accounts")
     .select("id,name")
     .in("name", names);
   if (e1) throw e1;
@@ -77,15 +77,13 @@ async function ensureAccounts(): Promise<AccountRow[]> {
   if (missing.length > 0) {
     // Insertar una por una para evitar que un conflicto cancele todo el batch
     for (const name of missing) {
-      const { error: ei } = await supabase
-        .from<AccountRow>("accounts")
-        .insert({ name } as any);
+      const { error: ei } = await supabase.from("accounts").insert({ name });
       // ignorar error de duplicate key (code 23505)
       if (ei && ei.code !== "23505") throw ei;
     }
     // Re-leer para obtener los IDs reales (incluye los recién creados y los ya existentes)
     const { data: refetch, error: e2 } = await supabase
-      .from<AccountRow>("accounts")
+      .from("accounts")
       .select("id,name")
       .in("name", names);
     if (e2) throw e2;
@@ -149,7 +147,7 @@ function CuentasPage() {
 
       const accountIds = existingAccounts.map((a) => a.id).filter(Boolean);
       const { data: movements, error: movementsError } = await supabase
-        .from<AccountMovement>("account_movements")
+        .from("account_movements")
         .select("id,account_id,type,amount,note,created_at")
         .in("account_id", accountIds)
         .order("created_at", { ascending: false });
@@ -246,6 +244,7 @@ function CuentasPage() {
     <AeroShell
       title="Cuentas (3)"
       subtitle="Cada movimiento se registra en una sola cuenta. Los retiros mueven dinero Centro → Encargado."
+      interactive
     >
       <div className="mb-3 flex gap-1">
         {(Object.keys(accounts) as Cuenta[]).map((k) => (

@@ -82,7 +82,7 @@ export function AeroShell({
 
           {/* Content */}
           <main className="bg-[rgba(245,250,255,0.55)] p-5">
-            <fieldset className="contents">
+            <fieldset disabled={!interactive} className="contents">
               <header className="mb-4 flex items-end justify-between gap-3 border-b border-[rgba(120,170,220,0.5)] pb-3">
                 <div>
                   <div className="text-[11px] uppercase tracking-wide text-[oklch(0.4_0.1_250)]">

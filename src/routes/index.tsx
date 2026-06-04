@@ -52,7 +52,7 @@ function Dashboard() {
     <AeroShell
       title="Dashboard"
       subtitle="Resumen operativo conectado a Supabase"
-      lockContent={false}
+      interactive
     >
       <div className="mb-4 flex items-center justify-between gap-3 rounded border border-[rgba(120,170,220,0.45)] bg-white/65 px-3 py-2 text-sm">
         <div>

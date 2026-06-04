@@ -56,7 +56,7 @@ function CierrePage() {
     try {
       const names = [accountNames.centro, accountNames.banco];
       const { data: accounts, error: accountsError } = await supabase
-        .from<AccountRow>("accounts")
+        .from("accounts")
         .select("id,name")
         .in("name", names);
       if (accountsError) throw accountsError;
@@ -71,7 +71,7 @@ function CierrePage() {
 
       if (accountIds.length > 0) {
         const { data: movements, error: movementsError } = await supabase
-          .from<AccountMovement>("account_movements")
+          .from("account_movements")
           .select("account_id,amount")
           .in("account_id", accountIds);
         if (movementsError) throw movementsError;
@@ -94,7 +94,7 @@ function CierrePage() {
       if (!userEditedBanco.current) setReportadoBanco(saldoBanco);
 
       const { data: closures, error: closuresError } = await supabase
-        .from<CashClosure>("cash_closures")
+        .from("cash_closures")
         .select("id,physical_cash,qr_amount,note,created_at")
         .order("created_at", { ascending: false })
         .limit(1);
@@ -166,6 +166,7 @@ function CierrePage() {
     <AeroShell
       title="Cierre de caja"
       subtitle="Asistente paso a paso — comparar lo contado con lo calculado"
+      interactive
     >
       <div className="grid grid-cols-12 gap-4">
         {/* Paso 1 */}

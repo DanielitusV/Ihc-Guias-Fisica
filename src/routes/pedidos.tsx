@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AeroShell, GuiaBadge, Panel } from "@/components/aero-shell";
 import { supabase } from "@/lib/supabase";
 
@@ -108,7 +108,6 @@ function toPedidoRow(order: OrderRecord): PedidoRow {
 }
 
 function PedidosPage() {
-  const pageRef = useRef<HTMLDivElement>(null);
   const [pedidos, setPedidos] = useState<PedidoRow[]>([]);
   const [guides, setGuides] = useState<GuideRecord[]>([]);
   const [fecha, setFecha] = useState(defaultArrivalDate);
@@ -118,19 +117,6 @@ function PedidosPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-
-  useLayoutEffect(() => {
-    const fieldset = pageRef.current?.closest("fieldset");
-
-    if (!(fieldset instanceof HTMLFieldSetElement)) return;
-
-    const wasDisabled = fieldset.disabled;
-    fieldset.disabled = false;
-
-    return () => {
-      fieldset.disabled = wasDisabled;
-    };
-  }, []);
 
   const loadPedidos = useCallback(async () => {
     setLoading(true);
@@ -298,8 +284,9 @@ function PedidosPage() {
     <AeroShell
       title="Pedidos a fotocopiadora"
       subtitle="Llegadas de guías y deuda con el proveedor"
+      interactive
     >
-      <div ref={pageRef} className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-12 gap-4">
         <Panel title="Historial de pedidos" className="col-span-8">
           <table className="aero-table">
             <thead>
