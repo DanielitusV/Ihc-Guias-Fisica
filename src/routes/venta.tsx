@@ -134,10 +134,14 @@ function VentaPage() {
                   </button>
                   <input
                     className="aero-input w-20 text-center"
-                    type="number"
-                    min={1}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      setQuantity(Math.max(1, Number(value) || 1));
+                    }}
                   />
                   <button
                     onClick={() => setQuantity((q) => q + 1)}
