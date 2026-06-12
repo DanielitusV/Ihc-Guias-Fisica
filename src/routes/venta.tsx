@@ -138,6 +138,7 @@ function VentaPage() {
                     inputMode="numeric"
                     pattern="[0-9]*"
                     value={quantity}
+                    onFocus={(e) => e.target.select()}
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, "");
                       setQuantity(Math.max(1, Number(value) || 1));
