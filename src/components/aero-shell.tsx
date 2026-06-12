@@ -23,6 +23,11 @@ export function AeroShell({
 }) {
   const loc = useLocation();
 
+  function logout() {
+    window.localStorage.removeItem("cef-admin");
+    window.location.href = "/";
+  }
+
   return (
     <div className="min-h-screen p-4 md:p-6">
       <div className="mx-auto max-w-[1400px] aero-window overflow-hidden">
@@ -69,14 +74,15 @@ export function AeroShell({
             </nav>
 
             <div className="mt-6 px-2 text-[10px] font-semibold uppercase tracking-wider text-[oklch(0.35_0.1_250)]">
-              Vista publica
+              Sesion
             </div>
-            <Link
-              to="/"
-              className="mt-2 flex items-center gap-2 rounded px-3 py-2 text-sm text-[oklch(0.28_0.08_250)] hover:bg-white/50"
+            <button
+              type="button"
+              onClick={logout}
+              className="mt-2 flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-[oklch(0.28_0.08_250)] hover:bg-white/50"
             >
-              <span className="w-5 text-center text-sm font-semibold">?</span> Consulta estudiante
-            </Link>
+              <span className="w-5 text-center text-sm font-semibold">×</span> Cerrar sesion
+            </button>
           </aside>
 
           <main className="bg-[rgba(245,250,255,0.55)] p-5">
