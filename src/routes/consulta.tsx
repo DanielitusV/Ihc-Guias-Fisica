@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { fetchGuides, type Guide, type GuiaTipo } from "@/lib/data";
 import { supabase } from "@/lib/supabase";
@@ -94,30 +94,30 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
     <div className="min-h-screen p-4 md:p-6">
       <div className="mx-auto max-w-6xl aero-window overflow-hidden">
         <div className="aero-titlebar flex flex-wrap items-center justify-between gap-3 px-5 py-2.5">
-          <div className="text-sm font-semibold">Consulta pública — Guías de Física · CEF UMSS</div>
+          <div className="text-base font-semibold">Consulta pública — Guías de Física · CEF UMSS</div>
           {showLogin && (
             <form
               onSubmit={(event) => void handleLogin(event)}
               className="flex flex-wrap items-center gap-2"
             >
               <input
-                className="aero-input h-8 w-24 text-xs"
+                className="aero-input h-9 w-28 text-sm"
                 placeholder="Usuario"
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
               />
               <input
-                className="aero-input h-8 w-24 text-xs"
+                className="aero-input h-9 w-28 text-sm"
                 placeholder="Clave"
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
               />
-              <button className="aero-btn h-8 px-3 text-xs font-semibold" type="submit">
+              <button className="aero-btn h-9 px-4 text-sm font-semibold" type="submit">
                 Entrar
               </button>
               {loginError && (
-                <span className="text-xs font-semibold text-red-900">{loginError}</span>
+                <span className="text-sm font-semibold text-red-900">{loginError}</span>
               )}
             </form>
           )}
@@ -130,14 +130,14 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
               <div className="text-[11px] uppercase tracking-[0.18em] text-[oklch(0.45_0.1_250)]">
                 Antes de venir al Centro
               </div>
-              <h1 className="text-2xl font-bold leading-tight text-[oklch(0.25_0.12_250)]">
+              <h1 className="text-3xl font-bold leading-tight text-[oklch(0.25_0.12_250)]">
                 Disponibilidad de guías de laboratorio
               </h1>
-              <p className="text-xs text-[oklch(0.45_0.08_250)]">
+              <p className="text-sm text-[oklch(0.45_0.08_250)]">
                 Revisa el stock e identifica qué guía corresponde a tu materia.
               </p>
             </div>
-            <div className="aero-panel px-4 py-2.5 text-xs leading-relaxed">
+            <div className="aero-panel px-4 py-2.5 text-sm leading-relaxed">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-[oklch(0.45_0.1_250)]">
                 Ubicación
               </div>
@@ -153,11 +153,11 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
           {/* GRUPO 1 — Guías */}
           <section className="border-t border-[rgba(120,170,220,0.45)] pt-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[oklch(0.3_0.1_250)]">
+              <h2 className="text-base font-semibold uppercase tracking-[0.14em] text-[oklch(0.3_0.1_250)]">
                 ¿Qué guía me toca?
               </h2>
               <input
-                className="aero-input w-full max-w-xs text-sm md:w-72"
+                className="aero-input w-full max-w-sm text-base md:w-80"
                 placeholder="Buscar por materia o carrera…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -165,18 +165,18 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
             </div>
 
             {loading ? (
-              <div className="py-10 text-center text-sm text-[oklch(0.45_0.08_250)]">
+              <div className="py-10 text-center text-base text-[oklch(0.45_0.08_250)]">
                 Cargando guías…
               </div>
             ) : error ? (
               <div className="space-y-3 py-8 text-center">
-                <p className="text-sm text-[oklch(0.5_0.2_25)]">⚠ {error}</p>
-                <button onClick={() => void load()} className="aero-btn px-4 py-2 text-sm">
+                <p className="text-base text-[oklch(0.5_0.2_25)]">⚠ {error}</p>
+                <button onClick={() => void load()} className="aero-btn px-4 py-2 text-base">
                   Reintentar
                 </button>
               </div>
             ) : filtradas.length === 0 ? (
-              <div className="py-10 text-center text-sm text-[oklch(0.45_0.08_250)]">
+              <div className="py-10 text-center text-base text-[oklch(0.45_0.08_250)]">
                 No se encontraron guías para “{query}”.
               </div>
             ) : (
@@ -185,15 +185,15 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
                   <article key={g.id} className="aero-panel flex flex-col p-4">
                     <div className="flex items-center justify-between">
                       <span className={`aero-badge ${badgeClass[g.tipo]}`}>Fis {g.tipo}</span>
-                      <span className="font-mono text-sm font-bold text-[oklch(0.3_0.16_245)]">
+                      <span className="font-mono text-base font-bold text-[oklch(0.3_0.16_245)]">
                         Bs {g.price}
                       </span>
                     </div>
 
-                    <div className="mt-3 text-sm font-semibold text-[oklch(0.25_0.12_250)]">
+                    <div className="mt-3 text-base font-semibold text-[oklch(0.25_0.12_250)]">
                       {g.subject}
                     </div>
-                    <div className="mt-1 text-xs">
+                    <div className="mt-1 text-sm">
                       {g.stock > 10 ? (
                         <span className="font-semibold text-[oklch(0.4_0.15_145)]">
                           ✓ Disponible ({g.stock} en stock)
@@ -207,7 +207,7 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
                       )}
                     </div>
 
-                    <div className="mt-4 border-t border-[rgba(120,170,220,0.35)] pt-3 text-[11px] leading-relaxed text-[oklch(0.4_0.08_250)]">
+                    <div className="mt-4 border-t border-[rgba(120,170,220,0.35)] pt-3 text-sm leading-relaxed text-[oklch(0.4_0.08_250)]">
                       <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[oklch(0.45_0.1_250)]">
                         Carreras que la cursan
                       </div>
@@ -222,7 +222,7 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
           {/* GRUPO 2 — Información logística */}
           <section className="mt-7 border-t border-[rgba(120,170,220,0.45)] pt-5">
             <div className="mb-3 flex items-baseline justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[oklch(0.3_0.1_250)]">
+              <h2 className="text-base font-semibold uppercase tracking-[0.14em] text-[oklch(0.3_0.1_250)]">
                 Información de atención
               </h2>
               <span className="text-[11px] text-[oklch(0.45_0.08_250)]">
@@ -233,11 +233,11 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
             <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
               <div className="aero-panel overflow-hidden md:col-span-2">
                 <div className="aero-titlebar px-4 py-1.5">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide">
+                  <h3 className="text-base font-semibold uppercase tracking-wide">
                     Horarios de atención
                   </h3>
                 </div>
-                <table className="w-full text-xs">
+                <table className="w-full text-sm">
                   <tbody>
                     {horarios.map((h) => (
                       <tr
@@ -262,9 +262,9 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
 
               <div className="aero-panel overflow-hidden">
                 <div className="aero-titlebar px-4 py-1.5">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide">Formas de pago</h3>
+                  <h3 className="text-base font-semibold uppercase tracking-wide">Formas de pago</h3>
                 </div>
-                <ul className="space-y-3 p-4 text-xs leading-relaxed text-[oklch(0.3_0.1_250)]">
+                <ul className="space-y-3 p-4 text-sm leading-relaxed text-[oklch(0.3_0.1_250)]">
                   <li>
                     <div className="font-semibold text-[oklch(0.25_0.12_250)]">Efectivo</div>
                     <div className="text-[oklch(0.45_0.08_250)]">Preferible monto exacto.</div>
@@ -280,11 +280,8 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
             </div>
           </section>
 
-          <footer className="mt-7 flex items-center justify-between border-t border-[rgba(120,170,220,0.45)] pt-4 text-[11px] text-[oklch(0.45_0.08_250)]">
+          <footer className="mt-7 border-t border-[rgba(120,170,220,0.45)] pt-4 text-sm text-[oklch(0.45_0.08_250)]">
             <span>Centro de Estudiantes de Física · CEF UMSS</span>
-            <Link to="/admin" className="aero-btn px-4 py-1.5 text-xs">
-              Panel encargado
-            </Link>
           </footer>
         </div>
       </div>
