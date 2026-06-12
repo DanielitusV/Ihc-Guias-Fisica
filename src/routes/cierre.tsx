@@ -2,15 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AeroShell, GuiaBadge, Panel } from "@/components/aero-shell";
 import { fetchGuides, type GuiaTipo } from "@/lib/data";
+import { accountIdByKey, accountNames, ensureAccounts, signedAmount } from "@/lib/accounts";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/cierre")({
   component: CierrePage,
-  head: () => ({ meta: [{ title: "Cierre de caja · CEF Guías" }] }),
+  head: () => ({ meta: [{ title: "Cierre de caja - CEF Guias" }] }),
 });
 
-type AccountRow = { id: number; name: string };
-type AccountMovement = { account_id: number; amount: number };
+type AccountMovement = { account_id: number; amount: number; type: "ingreso" | "salida" | "retiro" };
 type CashClosure = {
   id: number;
   physical_cash: number;
@@ -19,10 +19,6 @@ type CashClosure = {
   created_at: string;
 };
 
-const accountNames = {
-  centro: "Caja del Centro",
-  banco: "Cuenta Banco (QR — Soto)",
-} as const;
 
 const GUIDE_TYPES = ["Gral", "I", "II", "III"] as const;
 const EMPTY_GUIDE_COUNTS: Record<GuiaTipo, number> = { Gral: 0, I: 0, II: 0, III: 0 };
@@ -57,12 +53,7 @@ function CierrePage() {
     setLoading(true);
     setError(null);
     try {
-      const names = [accountNames.centro, accountNames.banco];
-      const [{ data: accounts, error: accountsError }, guides] = await Promise.all([
-        supabase.from("accounts").select("id,name").in("name", names),
-        fetchGuides(),
-      ]);
-      if (accountsError) throw accountsError;
+      const [accounts, guides] = await Promise.all([ensureAccounts(), fetchGuides()]);
 
       const guideCounts = guides.reduce<Record<GuiaTipo, number>>(
         (acc, guide) => ({
@@ -75,10 +66,9 @@ function CierrePage() {
       setExpectedGuides(guideCounts);
       if (!userEditedGuides.current) setCounts(guideCounts);
 
-      const accountMap = Object.fromEntries(
-        (accounts ?? []).map((a) => [a.name, a.id]),
-      );
-      const accountIds = Object.values(accountMap).filter(Boolean);
+      const centroId = accountIdByKey(accounts, "centro");
+      const bancoId = accountIdByKey(accounts, "banco");
+      const accountIds = [centroId, bancoId].filter(Boolean);
 
       let saldoCentro = 0;
       let saldoBanco = 0;
@@ -86,24 +76,24 @@ function CierrePage() {
       if (accountIds.length > 0) {
         const { data: movements, error: movementsError } = await supabase
           .from("account_movements")
-          .select("account_id,amount")
+          .select("account_id,amount,type")
           .in("account_id", accountIds);
         if (movementsError) throw movementsError;
 
         saldoCentro =
           movements
-            ?.filter((m) => m.account_id === accountMap[accountNames.centro])
-            .reduce((sum, m) => sum + Number(m.amount), 0) ?? 0;
+            ?.filter((m) => m.account_id === centroId)
+            .reduce((sum, m) => sum + signedAmount(m.type, Number(m.amount)), 0) ?? 0;
         saldoBanco =
           movements
-            ?.filter((m) => m.account_id === accountMap[accountNames.banco])
-            .reduce((sum, m) => sum + Number(m.amount), 0) ?? 0;
+            ?.filter((m) => m.account_id === bancoId)
+            .reduce((sum, m) => sum + signedAmount(m.type, Number(m.amount)), 0) ?? 0;
       }
 
       setExpectedCentro(saldoCentro);
       setExpectedBanco(saldoBanco);
 
-      // FIX: solo inicializar los campos contados si el usuario no los editó manualmente
+      // FIX: solo inicializar los campos contados si el usuario no los edito manualmente
       if (!userEditedCentro.current) setContadoCentro(saldoCentro);
       if (!userEditedBanco.current) setReportadoBanco(saldoBanco);
 
@@ -134,7 +124,7 @@ function CierrePage() {
       ]);
       if (insertError) throw insertError;
 
-      // FIX: resetear flags de edición para que loadData actualice los campos
+      // FIX: resetear flags de edicion para que loadData actualice los campos
       userEditedCentro.current = false;
       userEditedBanco.current = false;
       userEditedGuides.current = false;
@@ -171,7 +161,7 @@ function CierrePage() {
     return (
       <AeroShell title="Cierre de caja">
         <div className="p-8 text-center text-sm text-[oklch(0.35_0.12_250)]">
-          Cargando datos…
+          Cargando datos...
         </div>
       </AeroShell>
     );
@@ -180,16 +170,16 @@ function CierrePage() {
   return (
     <AeroShell
       title="Cierre de caja"
-      subtitle="Asistente paso a paso — comparar lo contado con lo calculado"
+      subtitle="Asistente paso a paso - comparar lo contado con lo calculado"
       interactive
     >
       <div className="grid grid-cols-12 gap-4">
         {/* Paso 1 */}
-        <Panel title="Paso 1 — Conteo físico de guías" className="col-span-6">
+        <Panel title="Paso 1 - Conteo fisico de guias" className="col-span-6">
           <table className="aero-table">
             <thead>
               <tr>
-                <th>Guía</th>
+                <th>Guia</th>
                 <th>Esperado</th>
                 <th>Contado</th>
                 <th>Diferencia</th>
@@ -239,7 +229,7 @@ function CierrePage() {
         </Panel>
 
         {/* Paso 2 */}
-        <Panel title="Paso 2 — Dinero físico contado" className="col-span-6">
+        <Panel title="Paso 2 - Dinero fisico contado" className="col-span-6">
           <div className="space-y-2 text-sm">
             <FieldRow k="Esperado (Caja Centro)" v={formatMoney(expectedCentro)} />
             <label className="flex items-center justify-between border-b border-[rgba(120,170,220,0.25)] py-1">
@@ -277,7 +267,7 @@ function CierrePage() {
         </Panel>
 
         {/* Paso 3 */}
-        <Panel title="Paso 3 — Verificación QR (Banco)" className="col-span-6">
+        <Panel title="Paso 3 - Verificacion QR (Banco)" className="col-span-6">
           <div className="space-y-2 text-sm">
             <FieldRow k="Esperado (Banco)" v={formatMoney(expectedBanco)} />
             <FieldRow
@@ -315,7 +305,7 @@ function CierrePage() {
         </Panel>
 
         {/* Paso 4 */}
-        <Panel title="Paso 4 — Resultado" className="col-span-6">
+        <Panel title="Paso 4 - Resultado" className="col-span-6">
           <div
             className={`aero-panel p-3 text-center ${
               cajaCuadra
@@ -323,7 +313,7 @@ function CierrePage() {
                 : "bg-[oklch(0.97_0.06_25)]/40"
             }`}
           >
-            <div className="text-2xl">{cajaCuadra ? "✓" : "⚠"}</div>
+            <div className="text-2xl">{cajaCuadra ? "OK" : "!"}</div>
             <div
               className={`font-semibold ${
                 cajaCuadra
@@ -336,7 +326,7 @@ function CierrePage() {
             <p className="mt-1 text-xs text-[oklch(0.45_0.08_250)]">
               {cajaCuadra
                 ? "Las cuentas coinciden con lo registrado."
-                : "Revisá los valores antes de guardar el cierre."}
+                : "Revisa los valores antes de guardar el cierre."}
             </p>
           </div>
 
@@ -345,22 +335,22 @@ function CierrePage() {
               className="aero-btn aero-btn-danger px-3 py-1.5 text-sm"
               disabled={saving}
               onClick={() => {
-                // Registrar diferencia negativa como pérdida en la misma página
+                // Registrar diferencia negativa como perdida en la misma pagina
                 if (difCentro < 0 || difBanco < 0) {
                   alert(
-                    `Diferencia Centro: ${formatMoney(difCentro)}\nDiferencia Banco: ${formatMoney(difBanco)}\n\nRegistrá la pérdida como una salida en la página de Cuentas.`,
+                    `Diferencia Centro: ${formatMoney(difCentro)}\nDiferencia Banco: ${formatMoney(difBanco)}\n\nRegistra la perdida como una salida en la pagina de Cuentas.`,
                   );
                 }
               }}
             >
-              Registrar pérdida
+              Registrar perdida
             </button>
             <button
               onClick={handleSaveClosure}
               className="aero-btn aero-btn-confirm px-4 py-1.5 text-sm font-semibold"
               disabled={saving}
             >
-              {saving ? "Guardando…" : "Guardar cierre del día"}
+              {saving ? "Guardando..." : "Guardar cierre del dia"}
             </button>
 
             {error && (
@@ -371,9 +361,9 @@ function CierrePage() {
 
             {lastClosure && (
               <div className="rounded border border-[rgba(120,170,220,0.4)] bg-white/80 p-3 text-sm">
-                <div className="font-semibold">Último cierre</div>
+                <div className="font-semibold">Ultimo cierre</div>
                 <div className="flex justify-between text-xs text-[oklch(0.45_0.08_250)]">
-                  <span>Caja física</span>
+                  <span>Caja fisica</span>
                   <span className="font-mono">{formatMoney(lastClosure.physical_cash)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-[oklch(0.45_0.08_250)]">

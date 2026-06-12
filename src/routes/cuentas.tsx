@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AeroShell, Panel } from "@/components/aero-shell";
+import {
+  accountKeyByName,
+  accountNames,
+  accountSubs,
+  ensureAccounts,
+  signedAmount,
+  type AccountMovement,
+  type AccountRow,
+  type Cuenta,
+} from "@/lib/accounts";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/cuentas")({
   component: CuentasPage,
-  head: () => ({ meta: [{ title: "Cuentas · CEF Guías" }] }),
+  head: () => ({ meta: [{ title: "Cuentas - CEF Guias" }] }),
 });
 
-type Cuenta = "centro" | "banco" | "encargado";
-type AccountRow = { id: number; name: string };
-type AccountMovement = {
-  id: number;
-  account_id: number;
-  type: "ingreso" | "salida" | "retiro";
-  amount: number;
-  note: string | null;
-  created_at: string;
-};
 type Mov = { fecha: string; concepto: string; monto: number };
 type AccountState = {
   id: number;
@@ -27,17 +27,6 @@ type AccountState = {
   movs: Mov[];
 };
 
-const accountNames: Record<Cuenta, string> = {
-  centro: "Caja del Centro",
-  banco: "Cuenta Banco (QR — Soto)",
-  encargado: "Cuenta Encargado",
-};
-
-const accountSubs: Record<Cuenta, string> = {
-  centro: "Dinero físico en el centro",
-  banco: "Pagos por QR de estudiantes",
-  encargado: "Dinero retirado del centro para pagar a fotocopiadora",
-};
 
 const createEmptyAccounts = (): Record<Cuenta, AccountState> => ({
   centro: { id: 0, nombre: accountNames.centro, sub: accountSubs.centro, saldo: 0, movs: [] },
@@ -49,7 +38,7 @@ const formatMoney = (value: number) =>
   `Bs ${value.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const formatMonto = (value: number) => {
-  const sign = value >= 0 ? "+" : "−";
+  const sign = value >= 0 ? "+" : "-";
   return `${sign}${Math.abs(value).toFixed(2)}`;
 };
 
@@ -61,37 +50,6 @@ const formatDate = (value: string) => {
     .padStart(2, "0")}`;
 };
 
-// FIX: hace upsert seguro y re-lee para garantizar IDs reales
-async function ensureAccounts(): Promise<AccountRow[]> {
-  const names = Object.values(accountNames);
-
-  const { data: existing, error: e1 } = await supabase
-    .from("accounts")
-    .select("id,name")
-    .in("name", names);
-  if (e1) throw e1;
-
-  const found = existing ?? [];
-  const missing = names.filter((n) => !found.some((a) => a.name === n));
-
-  if (missing.length > 0) {
-    // Insertar una por una para evitar que un conflicto cancele todo el batch
-    for (const name of missing) {
-      const { error: ei } = await supabase.from("accounts").insert({ name });
-      // ignorar error de duplicate key (code 23505)
-      if (ei && ei.code !== "23505") throw ei;
-    }
-    // Re-leer para obtener los IDs reales (incluye los recién creados y los ya existentes)
-    const { data: refetch, error: e2 } = await supabase
-      .from("accounts")
-      .select("id,name")
-      .in("name", names);
-    if (e2) throw e2;
-    return refetch ?? found;
-  }
-
-  return found;
-}
 
 const buildAccountState = (
   accounts: AccountRow[],
@@ -100,9 +58,7 @@ const buildAccountState = (
   const state = createEmptyAccounts();
 
   accounts.forEach((account) => {
-    const key = (Object.keys(accountNames) as Cuenta[]).find(
-      (k) => account.name === accountNames[k],
-    );
+    const key = accountKeyByName(account.name);
     if (key) state[key].id = account.id;
   });
 
@@ -115,9 +71,9 @@ const buildAccountState = (
     account.movs.push({
       fecha: formatDate(movement.created_at),
       concepto: movement.note || movement.type,
-      monto: Number(movement.amount),
+      monto: signedAmount(movement.type, Number(movement.amount)),
     });
-    account.saldo += Number(movement.amount);
+    account.saldo += signedAmount(movement.type, Number(movement.amount));
   });
 
   return state;
@@ -174,11 +130,15 @@ function CuentasPage() {
       return;
     }
     if (!currentAccount.id) {
-      setError("No se encontró la cuenta seleccionada. Recargá la página.");
+      setError("No se encontro la cuenta seleccionada. Recarga la pagina.");
       return;
     }
     if (tipo === "retiro" && tab !== "centro") {
       setError("El retiro solo se realiza desde Caja del Centro.");
+      return;
+    }
+    if (tipo === "retiro" && !accounts.encargado.id) {
+      setError("No se encontro la cuenta del encargado. Recarga la pagina.");
       return;
     }
 
@@ -192,21 +152,21 @@ function CuentasPage() {
               {
                 account_id: currentAccount.id,
                 type: "retiro",
-                amount: -parsed,
+                amount: parsed,
                 note: concepto.trim(),
               },
               {
                 account_id: accounts.encargado.id,
                 type: "ingreso",
                 amount: parsed,
-                note: `Retiro desde centro · ${concepto.trim()}`,
+                note: `Retiro desde centro - ${concepto.trim()}`,
               },
             ]
           : [
               {
                 account_id: currentAccount.id,
                 type: tipo === "entrada" ? "ingreso" : "salida",
-                amount: tipo === "salida" ? -parsed : parsed,
+                amount: parsed,
                 note: concepto.trim(),
               },
             ];
@@ -216,7 +176,7 @@ function CuentasPage() {
 
       setMonto("");
       setConcepto("");
-      // FIX: resetear tipo a "entrada" después de un retiro para evitar confusión
+      // FIX: resetear tipo a "entrada" despues de un retiro para evitar confusion
       if (tipo === "retiro") setTipo("entrada");
 
       await loadAccounts();
@@ -243,7 +203,7 @@ function CuentasPage() {
   return (
     <AeroShell
       title="Cuentas (3)"
-      subtitle="Cada movimiento se registra en una sola cuenta. Los retiros mueven dinero Centro → Encargado."
+      subtitle="Cada movimiento se registra en una sola cuenta. Los retiros mueven dinero Centro -> Encargado."
       interactive
     >
       <div className="mb-3 flex gap-1">
@@ -262,7 +222,7 @@ function CuentasPage() {
         <Panel title={currentAccount.nombre} hint={currentAccount.sub} className="col-span-8">
           {loading ? (
             <div className="p-8 text-center text-sm text-[oklch(0.35_0.12_250)]">
-              Cargando movimientos…
+              Cargando movimientos...
             </div>
           ) : (
             <table className="aero-table">
@@ -362,7 +322,7 @@ function CuentasPage() {
                 <input
                   value={concepto}
                   onChange={(e) => setConcepto(e.target.value)}
-                  placeholder="Descripción breve"
+                  placeholder="Descripcion breve"
                   className="aero-input mt-1 w-full"
                   disabled={saving}
                   maxLength={120}
@@ -373,7 +333,7 @@ function CuentasPage() {
                 className="aero-btn aero-btn-confirm w-full py-2 text-sm font-semibold"
                 disabled={saving}
               >
-                {saving ? "Guardando…" : "Guardar movimiento"}
+                {saving ? "Guardando..." : "Guardar movimiento"}
               </button>
               {error && (
                 <div className="rounded border border-[oklch(0.8_0.1_25)] bg-[oklch(0.97_0.03_25)] px-3 py-2 text-sm text-[oklch(0.5_0.2_25)]">
@@ -383,7 +343,7 @@ function CuentasPage() {
             </div>
           </Panel>
 
-          <Panel title="Acciones rápidas">
+          <Panel title="Acciones rapidas">
             <div className="space-y-2">
               <button
                 onClick={() => setTipo("entrada")}
@@ -397,7 +357,7 @@ function CuentasPage() {
                 className="aero-btn w-full py-2 text-sm"
                 disabled={saving}
               >
-                − Registrar salida
+                - Registrar salida
               </button>
               {tab === "centro" && (
                 <button
@@ -405,7 +365,7 @@ function CuentasPage() {
                   className="aero-btn w-full py-2 text-sm"
                   disabled={saving}
                 >
-                  ⇄ Retiro encargado
+                  Retiro encargado
                 </button>
               )}
             </div>

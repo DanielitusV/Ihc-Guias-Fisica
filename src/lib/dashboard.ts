@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { accountNames } from "@/lib/accounts";
 
 export type GuideStock = {
   id: number;
@@ -55,7 +56,11 @@ export async function getDashboardData(): Promise<DashboardData> {
   const [guidesResult, accountsResult, inventoryResult, accountMovementsResult] = await Promise.all(
     [
       supabase.from("guides").select("id,name,subject,price,stock").order("id"),
-      supabase.from("accounts").select("id,name").order("name"),
+      supabase
+        .from("accounts")
+        .select("id,name")
+        .in("name", Object.values(accountNames))
+        .order("name"),
       supabase
         .from("inventory_movements")
         .select("id,type,quantity,note,created_at,guides(name)")
@@ -93,12 +98,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     const accountName = String(account.name);
     const balance = accountMovementRows
       .filter((movement) => relationName(movement.accounts) === accountName)
-      .reduce((total, movement) => {
-        const amount = Number(movement.amount);
-        return movement.type === "salida" || movement.type === "retiro"
-          ? total - amount
-          : total + amount;
-      }, 0);
+      .reduce((total, movement) => total + Number(movement.amount), 0);
 
     return {
       id: Number(account.id),

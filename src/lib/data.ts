@@ -1,3 +1,4 @@
+import { accountIdByKey, ensureAccounts } from "./accounts";
 import { supabase } from "./supabase";
  
 // ---- Tipos del dominio --------------------------------------------------
@@ -117,12 +118,35 @@ export async function registrarEntrega(input: RegistrarEntregaInput) {
     await supabase.from("guides").update({ stock: guide.stock }).eq("id", guideId);
     throw new Error(movErr.message);
   }
+
+  const accounts = await ensureAccounts();
+  const accountId = accountIdByKey(accounts, method === "efectivo" ? "centro" : "banco");
+  const total = Number(guide.price) * quantity;
+
+  if (!accountId) {
+    await supabase.from("inventory_movements").delete().eq("guide_id", guideId).eq("note", nota);
+    await supabase.from("guides").update({ stock: guide.stock }).eq("id", guideId);
+    throw new Error("No se encontro la cuenta destino de la venta");
+  }
+
+  const { error: accountErr } = await supabase.from("account_movements").insert({
+    account_id: accountId,
+    type: "ingreso",
+    amount: total,
+    note: `Venta ${method} - ${guide.name}${student ? ` - ${student}` : ""}`,
+  });
+
+  if (accountErr) {
+    await supabase.from("inventory_movements").delete().eq("guide_id", guideId).eq("note", nota);
+    await supabase.from("guides").update({ stock: guide.stock }).eq("id", guideId);
+    throw new Error(accountErr.message);
+  }
  
   return {
     guide_id: guideId,
     quantity,
     unit_price: guide.price,
-    total: guide.price * quantity,
+    total,
     method,
     student: student ?? null,
   };

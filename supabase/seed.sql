@@ -15,9 +15,9 @@ where not exists (
 
 insert into accounts (name)
 values
-  ('Caja fisica'),
-  ('Cuenta QR'),
-  ('Cuenta encargado')
+  ('Caja del Centro'),
+  ('Cuenta Banco (QR — Soto)'),
+  ('Cuenta Encargado')
 on conflict (name) do nothing;
 
 insert into inventory_movements (guide_id, type, quantity, note)
@@ -40,9 +40,9 @@ insert into account_movements (account_id, type, amount, note)
 select accounts.id, 'ingreso', seed.amount, 'Saldo inicial de prueba'
 from (
   values
-    ('Caja fisica', 280.00),
-    ('Cuenta QR', 950.00),
-    ('Cuenta encargado', 120.00)
+    ('Caja del Centro', 280.00),
+    ('Cuenta Banco (QR — Soto)', 950.00),
+    ('Cuenta Encargado', 120.00)
 ) as seed(name, amount)
 join accounts on accounts.name = seed.name
 where not exists (
