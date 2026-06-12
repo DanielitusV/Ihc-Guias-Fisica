@@ -266,13 +266,15 @@ function CuentasPage() {
                 </span>
                 <input
                   value={monto}
-                  onChange={(e) => setMonto(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9.,]/g, "");
+                    setMonto(value);
+                  }}
                   placeholder="0.00"
                   className="aero-input mt-1 w-full text-right"
                   disabled={saving}
-                  type="number"
-                  min="0.01"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                 />
               </label>
               <label className="block">
