@@ -27,7 +27,6 @@ type InventoryMovementRecord = {
 type InventoryRow = {
   id: number;
   tipo: GuiaTipo;
-  fiadas: number;
   compradas: number;
   efectivo: number;
   qr: number;
@@ -36,7 +35,6 @@ type InventoryRow = {
 };
 
 const emptyMovementStats = () => ({
-  fiadas: 0,
   compradas: 0,
   efectivo: 0,
   qr: 0,
@@ -72,11 +70,7 @@ function buildInventoryRows(
     const note = normalizeText(movement.note ?? "");
 
     if (movement.type === "entrada") {
-      if (note.includes("FIAD")) {
-        stats.fiadas += quantity;
-      } else {
-        stats.compradas += quantity;
-      }
+      stats.compradas += quantity;
     }
 
     if (movement.type === "salida") {
@@ -97,7 +91,6 @@ function buildInventoryRows(
     return {
       id: guide.id,
       tipo: getGuideTipo(guide),
-      fiadas: stats.fiadas,
       compradas: stats.compradas,
       efectivo: stats.efectivo,
       qr: stats.qr,
@@ -152,13 +145,12 @@ function InventarioPage() {
   }, [loadInventory]);
 
   return (
-    <AeroShell title="Inventario" subtitle="Stock real por guía — incluye fiadas y compradas">
-      <Panel title="Detalle de inventario por guía">
+    <AeroShell title="Inventario" subtitle="Stock real por guia y ventas registradas">
+      <Panel title="Detalle de inventario por guia">
         <table className="aero-table">
           <thead>
             <tr>
-              <th>Guía</th>
-              <th>Fiadas</th>
+              <th>Guia</th>
               <th>Compradas</th>
               <th>Vendidas efectivo</th>
               <th>Vendidas QR</th>
@@ -169,22 +161,22 @@ function InventarioPage() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={7} className="text-center text-xs">
+                <td colSpan={6} className="text-center text-xs">
                   Cargando inventario...
                 </td>
               </tr>
             )}
             {!loading && error && (
               <tr>
-                <td colSpan={7} className="text-center text-xs text-[oklch(0.5_0.2_25)]">
+                <td colSpan={6} className="text-center text-xs text-[oklch(0.5_0.2_25)]">
                   No se pudo cargar el inventario: {error}
                 </td>
               </tr>
             )}
             {!loading && !error && rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center text-xs">
-                  Sin guías registradas.
+                <td colSpan={6} className="text-center text-xs">
+                  Sin guias registradas.
                 </td>
               </tr>
             )}
@@ -193,7 +185,6 @@ function InventarioPage() {
                 <td>
                   <GuiaBadge tipo={r.tipo} />
                 </td>
-                <td>{r.fiadas}</td>
                 <td>{r.compradas}</td>
                 <td>{r.efectivo}</td>
                 <td>{r.qr}</td>
@@ -210,7 +201,7 @@ function InventarioPage() {
           </tbody>
         </table>
         <p className="mt-3 text-[11px] text-[oklch(0.45_0.08_250)]">
-          Stock = Fiadas + Compradas − (Vendidas efectivo + Vendidas QR). En rojo: stock bajo.
+          Stock restante segun entradas y ventas registradas. En rojo: stock bajo.
         </p>
       </Panel>
     </AeroShell>
