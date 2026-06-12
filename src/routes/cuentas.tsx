@@ -88,6 +88,7 @@ function CuentasPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [providerDebt, setProviderDebt] = useState(0);
 
   const currentAccount = accounts[tab];
 
@@ -102,18 +103,29 @@ function CuentasPage() {
       const existingAccounts = await ensureAccounts();
 
       const accountIds = existingAccounts.map((a) => a.id).filter(Boolean);
-      const { data: movements, error: movementsError } = await supabase
-        .from("account_movements")
-        .select("id,account_id,type,amount,note,created_at")
-        .in("account_id", accountIds)
-        .order("created_at", { ascending: false });
+      const [{ data: movements, error: movementsError }, { data: pendingOrders, error: ordersError }] =
+        await Promise.all([
+          supabase
+            .from("account_movements")
+            .select("id,account_id,type,amount,note,created_at")
+            .in("account_id", accountIds)
+            .order("created_at", { ascending: false }),
+          supabase.from("orders").select("total_cost,status"),
+        ]);
 
       if (movementsError) throw movementsError;
+      if (ordersError) throw ordersError;
 
       setAccounts(buildAccountState(existingAccounts, movements ?? []));
+      setProviderDebt(
+        (pendingOrders ?? [])
+          .filter((order) => String(order.status).toLowerCase() !== "pagado")
+          .reduce((sum, order) => sum + Number(order.total_cost), 0),
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setAccounts(createEmptyAccounts());
+      setProviderDebt(0);
     } finally {
       setLoading(false);
     }
@@ -376,7 +388,7 @@ function CuentasPage() {
               <div className="py-2 text-center">
                 <div className="text-[11px] uppercase tracking-wide">Pendiente</div>
                 <div className="font-mono text-2xl font-bold text-[oklch(0.5_0.2_25)]">
-                  Bs 27 243.68
+                  {formatMoney(providerDebt)}
                 </div>
                 <p className="mt-1 text-[11px] text-[oklch(0.45_0.08_250)]">
                   Al pagar, registrar como salida en Encargado.

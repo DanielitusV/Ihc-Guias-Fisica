@@ -52,7 +52,9 @@ type PedidoRow = {
 type QuantityState = Record<GuiaTipo, string>;
 
 const guideTypes = ["Gral", "I", "II", "III"] as const;
-const defaultArrivalDate = "2026-05-26";
+function todayInputDate() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function emptyQuantities(): QuantityState {
   return {
@@ -170,7 +172,7 @@ function toPedidoSummaryRow(order: OrderRecord): PedidoRow {
 function PedidosPage() {
   const [pedidos, setPedidos] = useState<PedidoRow[]>([]);
   const [guides, setGuides] = useState<GuideRecord[]>([]);
-  const [fecha, setFecha] = useState(defaultArrivalDate);
+  const [fecha, setFecha] = useState(todayInputDate);
   const [cantidades, setCantidades] = useState<QuantityState>(() => emptyQuantities());
   const [comentario, setComentario] = useState("");
   const [loading, setLoading] = useState(true);
@@ -242,7 +244,7 @@ function PedidosPage() {
   }
 
   function resetForm() {
-    setFecha(defaultArrivalDate);
+    setFecha(todayInputDate());
     setCantidades(emptyQuantities());
     setComentario("");
     setFormError(null);
