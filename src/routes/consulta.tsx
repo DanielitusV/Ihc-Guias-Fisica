@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { fetchGuides, type Guide, type GuiaTipo } from "@/lib/data";
 import { supabase } from "@/lib/supabase";
 
@@ -30,7 +30,6 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
   const [guias, setGuias] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -50,18 +49,6 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
   useEffect(() => {
     void load();
   }, []);
-
-  const filtradas = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return guias;
-    return guias.filter(
-      (g) =>
-        g.subject.toLowerCase().includes(q) ||
-        g.name.toLowerCase().includes(q) ||
-        g.careers.toLowerCase().includes(q) ||
-        `fis ${g.tipo}`.toLowerCase().includes(q),
-    );
-  }, [guias, query]);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -156,12 +143,9 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
               <h2 className="text-base font-semibold uppercase tracking-[0.14em] text-[oklch(0.3_0.1_250)]">
                 ¿Qué guía me toca?
               </h2>
-              <input
-                className="aero-input w-full max-w-sm text-base md:w-80"
-                placeholder="Buscar por materia o carrera…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
+              <span className="text-[11px] text-[oklch(0.45_0.08_250)]">
+                Identifica tu guía por materia
+              </span>
             </div>
 
             {loading ? (
@@ -175,13 +159,13 @@ export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
                   Reintentar
                 </button>
               </div>
-            ) : filtradas.length === 0 ? (
-              <div className="py-10 text-center text-base text-[oklch(0.45_0.08_250)]">
-                No se encontraron guías para “{query}”.
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-5 xl:grid-cols-4">
-                {filtradas.map((g) => (
+                ) : guias.length === 0 ? (
+                  <div className="py-10 text-center text-sm text-[oklch(0.45_0.08_250)]">
+                    No hay guías registradas.
+                  </div>
+                ) : (
+                <div className="grid grid-cols-2 gap-5 xl:grid-cols-4">
+                  {guias.map((g) => (
                   <article key={g.id} className="aero-panel flex flex-col p-4">
                     <div className="flex items-center justify-between">
                       <span className={`aero-badge ${badgeClass[g.tipo]}`}>Fis {g.tipo}</span>
