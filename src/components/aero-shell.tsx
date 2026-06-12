@@ -2,7 +2,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: "â–¦" },
+  { to: "/admin", label: "Dashboard", icon: "â–¦" },
   { to: "/venta", label: "Registrar entrega", icon: "ðŸ›’" },
   { to: "/inventario", label: "Inventario", icon: "ðŸ“¦" },
   { to: "/cuentas", label: "Cuentas (3)", icon: "ðŸ’³" },
@@ -73,7 +73,7 @@ export function AeroShell({
               Vista pÃºblica
             </div>
             <Link
-              to="/consulta"
+              to="/"
               className="mt-2 flex items-center gap-2 rounded px-3 py-2 text-sm text-[oklch(0.28_0.08_250)] hover:bg-white/50"
             >
               <span>ðŸ”Ž</span> Consulta estudiante

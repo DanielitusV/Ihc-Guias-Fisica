@@ -46,9 +46,23 @@ create table cash_closures (
   created_at timestamptz not null default now()
 );
 
+create table admins (
+  id bigint generated always as identity primary key,
+  username text not null unique,
+  password text not null,
+  created_at timestamptz not null default now()
+);
+
 alter table guides enable row level security;
 alter table inventory_movements enable row level security;
 alter table accounts enable row level security;
 alter table account_movements enable row level security;
 alter table orders enable row level security;
 alter table cash_closures enable row level security;
+alter table admins enable row level security;
+
+create policy "Allow prototype admin login lookup"
+on admins
+for select
+to anon
+using (true);

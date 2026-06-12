@@ -13,6 +13,10 @@ where not exists (
   where guides.name = seed.name
 );
 
+insert into admins (username, password)
+values ('admin', 'admin')
+on conflict (username) do update set password = excluded.password;
+
 insert into accounts (name)
 values
   ('Caja del Centro'),

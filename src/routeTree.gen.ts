@@ -15,6 +15,7 @@ import { Route as InventarioRouteImport } from './routes/inventario'
 import { Route as CuentasRouteImport } from './routes/cuentas'
 import { Route as ConsultaRouteImport } from './routes/consulta'
 import { Route as CierreRouteImport } from './routes/cierre'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
 const VentaRoute = VentaRouteImport.update({
@@ -47,6 +48,11 @@ const CierreRoute = CierreRouteImport.update({
   path: '/cierre',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,6 +61,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/cierre': typeof CierreRoute
   '/consulta': typeof ConsultaRoute
   '/cuentas': typeof CuentasRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/cierre': typeof CierreRoute
   '/consulta': typeof ConsultaRoute
   '/cuentas': typeof CuentasRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/cierre': typeof CierreRoute
   '/consulta': typeof ConsultaRoute
   '/cuentas': typeof CuentasRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/cierre'
     | '/consulta'
     | '/cuentas'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/cierre'
     | '/consulta'
     | '/cuentas'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/cierre'
     | '/consulta'
     | '/cuentas'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   CierreRoute: typeof CierreRoute
   ConsultaRoute: typeof ConsultaRoute
   CuentasRoute: typeof CuentasRoute
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CierreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -177,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   CierreRoute: CierreRoute,
   ConsultaRoute: ConsultaRoute,
   CuentasRoute: CuentasRoute,

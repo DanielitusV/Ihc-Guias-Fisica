@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { fetchGuides, type Guide, type GuiaTipo } from "@/lib/data";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/consulta")({
-  component: ConsultaPage,
+  component: () => <ConsultaPage />,
   head: () => ({ meta: [{ title: "Consulta de guías · Centro de Estudiantes de Física" }] }),
 });
 
@@ -24,11 +25,15 @@ const horarios = [
   { dia: "Domingo", hora: "Cerrado", abierto: false },
 ];
 
-function ConsultaPage() {
+export function ConsultaPage({ showLogin = false }: { showLogin?: boolean }) {
+  const navigate = useNavigate();
   const [guias, setGuias] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   async function load() {
     setLoading(true);
@@ -58,11 +63,64 @@ function ConsultaPage() {
     );
   }, [guias, query]);
 
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoginError("");
+
+    const user = username.trim();
+    const { data, error: authError } = await supabase
+      .from("admins")
+      .select("id")
+      .eq("username", user)
+      .eq("password", password)
+      .maybeSingle();
+
+    if (!authError && data) {
+      window.localStorage.setItem("cef-admin", "ok");
+      await navigate({ to: "/admin" });
+      return;
+    }
+
+    if (authError && user === "admin" && password === "admin") {
+      window.localStorage.setItem("cef-admin", "ok");
+      await navigate({ to: "/admin" });
+      return;
+    }
+
+    setLoginError("Credenciales invalidas");
+  }
+
   return (
     <div className="min-h-screen p-4 md:p-6">
       <div className="mx-auto max-w-6xl aero-window overflow-hidden">
-        <div className="aero-titlebar px-5 py-2.5">
+        <div className="aero-titlebar flex flex-wrap items-center justify-between gap-3 px-5 py-2.5">
           <div className="text-sm font-semibold">Consulta pública — Guías de Física · CEF UMSS</div>
+          {showLogin && (
+            <form
+              onSubmit={(event) => void handleLogin(event)}
+              className="flex flex-wrap items-center gap-2"
+            >
+              <input
+                className="aero-input h-8 w-24 text-xs"
+                placeholder="Usuario"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+              />
+              <input
+                className="aero-input h-8 w-24 text-xs"
+                placeholder="Clave"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+              <button className="aero-btn h-8 px-3 text-xs font-semibold" type="submit">
+                Entrar
+              </button>
+              {loginError && (
+                <span className="text-xs font-semibold text-red-900">{loginError}</span>
+              )}
+            </form>
+          )}
         </div>
 
         <div className="bg-[rgba(245,250,255,0.6)] px-8 py-6">
@@ -224,8 +282,8 @@ function ConsultaPage() {
 
           <footer className="mt-7 flex items-center justify-between border-t border-[rgba(120,170,220,0.45)] pt-4 text-[11px] text-[oklch(0.45_0.08_250)]">
             <span>Centro de Estudiantes de Física · CEF UMSS</span>
-            <Link to="/" className="aero-btn px-4 py-1.5 text-xs">
-              ← Volver al panel
+            <Link to="/admin" className="aero-btn px-4 py-1.5 text-xs">
+              Panel encargado
             </Link>
           </footer>
         </div>
