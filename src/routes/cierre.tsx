@@ -115,11 +115,18 @@ function CierrePage() {
     setSaving(true);
     setError(null);
     try {
+      const note = [
+        `Guias ${guideRows.map((row) => `${row.tipo}:${row.contado}/${row.esperado}`).join(", ")}`,
+        `Dif caja ${difCentro.toFixed(2)}`,
+        `Dif banco ${difBanco.toFixed(2)}`,
+        cajaCuadra ? "Cuadra" : "No cuadra",
+      ].join(" | ");
+
       const { error: insertError } = await supabase.from("cash_closures").insert([
         {
           physical_cash: contadoCentro,
           qr_amount: reportadoBanco,
-          note: "Cierre manual desde UI",
+          note,
         },
       ]);
       if (insertError) throw insertError;
@@ -128,6 +135,52 @@ function CierrePage() {
       userEditedCentro.current = false;
       userEditedBanco.current = false;
       userEditedGuides.current = false;
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRegisterLoss = async () => {
+    if (difCentro >= 0 && difBanco >= 0) {
+      setError("No hay perdida negativa para registrar.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const accounts = await ensureAccounts();
+      const centroId = accountIdByKey(accounts, "centro");
+      const bancoId = accountIdByKey(accounts, "banco");
+      const movements = [
+        difCentro < 0 && centroId
+          ? {
+              account_id: centroId,
+              type: "salida",
+              amount: Math.abs(difCentro),
+              note: "Perdida detectada en cierre de caja",
+            }
+          : null,
+        difBanco < 0 && bancoId
+          ? {
+              account_id: bancoId,
+              type: "salida",
+              amount: Math.abs(difBanco),
+              note: "Diferencia negativa QR en cierre de caja",
+            }
+          : null,
+      ].filter(Boolean);
+
+      if (movements.length === 0) throw new Error("No se encontro cuenta para registrar perdida.");
+
+      const { error: insertError } = await supabase.from("account_movements").insert(movements);
+      if (insertError) throw insertError;
+
+      userEditedCentro.current = false;
+      userEditedBanco.current = false;
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -204,7 +257,7 @@ function CierrePage() {
                           userEditedGuides.current = true;
                           setCounts((prev) => ({
                             ...prev,
-                            [tipo]: Number(e.target.value),
+                            [tipo]: Math.max(0, Number(e.target.value) || 0),
                           }));
                         }
                       }
@@ -244,7 +297,7 @@ function CierrePage() {
                 value={contadoCentro}
                 onChange={(e) => {
                   userEditedCentro.current = true;
-                  setContadoCentro(Number(e.target.value));
+                  setContadoCentro(Math.max(0, Number(e.target.value) || 0));
                 }}
                 disabled={saving}
               />
@@ -281,7 +334,7 @@ function CierrePage() {
                   value={reportadoBanco}
                   onChange={(e) => {
                     userEditedBanco.current = true;
-                    setReportadoBanco(Number(e.target.value));
+                    setReportadoBanco(Math.max(0, Number(e.target.value) || 0));
                   }}
                   disabled={saving}
                 />
@@ -334,14 +387,7 @@ function CierrePage() {
             <button
               className="aero-btn aero-btn-danger px-3 py-1.5 text-sm"
               disabled={saving}
-              onClick={() => {
-                // Registrar diferencia negativa como perdida en la misma pagina
-                if (difCentro < 0 || difBanco < 0) {
-                  alert(
-                    `Diferencia Centro: ${formatMoney(difCentro)}\nDiferencia Banco: ${formatMoney(difBanco)}\n\nRegistra la perdida como una salida en la pagina de Cuentas.`,
-                  );
-                }
-              }}
+              onClick={() => void handleRegisterLoss()}
             >
               Registrar perdida
             </button>
