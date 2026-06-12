@@ -18,6 +18,7 @@ function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState("");
+  const [showMovements, setShowMovements] = useState(false);
 
   async function loadDashboard() {
     setStatus("loading");
@@ -171,30 +172,55 @@ function Dashboard() {
             )}
           </Panel>
 
-          <Panel title="Movimientos recientes" hint="Inventario y cuentas" className="col-span-12">
-            {data.recentMovements.length === 0 ? (
-              <EmptyState text="Todavia no hay movimientos registrados." />
-            ) : (
-              <table className="aero-table">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Origen</th>
-                    <th>Registro</th>
-                    <th>Detalle</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.recentMovements.map((movement) => (
-                    <tr key={movement.id}>
-                      <td className="font-mono text-xs">{formatDate(movement.date)}</td>
-                      <td>{movement.source}</td>
-                      <td className="font-semibold">{movement.title}</td>
-                      <td>{movement.detail}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <Panel
+            title="Movimientos recientes"
+            hint={`${data.recentMovements.length} ultimos`}
+            className="col-span-12"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-[oklch(0.28_0.1_250)]">
+                  Historial bajo demanda
+                </div>
+                <div className="text-xs text-[oklch(0.42_0.08_250)]">
+                  Se oculta para mantener limpio el dashboard principal.
+                </div>
+              </div>
+              <button
+                className="aero-btn px-4 py-2 text-sm font-semibold"
+                onClick={() => setShowMovements((visible) => !visible)}
+              >
+                {showMovements ? "Ocultar historial" : "Ver historial"}
+              </button>
+            </div>
+
+            {showMovements && (
+              <div className="mt-3 max-h-72 overflow-auto rounded border border-[rgba(120,170,220,0.35)]">
+                {data.recentMovements.length === 0 ? (
+                  <EmptyState text="Todavia no hay movimientos registrados." />
+                ) : (
+                  <table className="aero-table">
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Origen</th>
+                        <th>Registro</th>
+                        <th>Detalle</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.recentMovements.map((movement) => (
+                        <tr key={movement.id}>
+                          <td className="font-mono text-xs">{formatDate(movement.date)}</td>
+                          <td>{movement.source}</td>
+                          <td className="font-semibold">{movement.title}</td>
+                          <td>{movement.detail}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             )}
           </Panel>
         </div>
