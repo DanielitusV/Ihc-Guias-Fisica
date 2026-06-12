@@ -302,25 +302,6 @@ function CuentasPage() {
               )}
             </div>
           </Panel>
-
-          <Panel title="Acciones rapidas">
-            <div className="space-y-2">
-              <button
-                onClick={() => setTipo("entrada")}
-                className="aero-btn w-full py-2 text-sm"
-                disabled={saving}
-              >
-                + Registrar entrada
-              </button>
-              <button
-                onClick={() => setTipo("salida")}
-                className="aero-btn w-full py-2 text-sm"
-                disabled={saving}
-              >
-                - Registrar salida
-              </button>
-            </div>
-          </Panel>
         </div>
       </div>
     </AeroShell>
