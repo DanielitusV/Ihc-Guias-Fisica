@@ -18,8 +18,8 @@ export type AccountMovement = {
 };
 
 export const accountNames: Record<Cuenta, string> = {
-  centro: "Cuenta_Fisico",
-  banco: "Cuenta_QR",
+  centro: "Cuenta Fisico",
+  banco: "Cuenta QR",
   encargado: "Cuenta Encargado",
 };
 

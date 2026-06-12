@@ -15,6 +15,6 @@ on conflict (username) do update set password = excluded.password;
 
 insert into accounts (name)
 values
-  ('Cuenta_Fisico'),
-  ('Cuenta_QR')
+  ('Cuenta Fisico'),
+  ('Cuenta QR')
 on conflict (name) do nothing;

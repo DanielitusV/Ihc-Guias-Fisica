@@ -67,20 +67,14 @@ function Dashboard() {
   }
 
   return (
-    <AeroShell
-      title="Dashboard"
-      subtitle="Resumen operativo conectado a Supabase"
-      interactive
-    >
+    <AeroShell title="Dashboard" interactive>
       <div className="mb-4 flex items-center justify-between gap-3 rounded border border-[rgba(120,170,220,0.45)] bg-white/65 px-3 py-2 text-sm">
         <div>
           <div className="font-semibold text-[oklch(0.28_0.1_250)]">
             Estado: {status === "loading" ? "cargando" : status === "error" ? "error" : "listo"}
           </div>
           <div className="text-xs text-[oklch(0.42_0.08_250)]">
-            {status === "error"
-              ? error
-              : "Datos reales desde las tablas guides, accounts y movimientos."}
+            {status === "error" ? error : "Informacion actualizada del sistema."}
           </div>
         </div>
         <button className="aero-btn px-3 py-1.5 text-sm font-semibold" onClick={loadDashboard}>
@@ -106,10 +100,10 @@ function Dashboard() {
           <SummaryCard
             label="Saldo registrado"
             value={`Bs ${currency.format(totalBalance)}`}
-            detail="Cuentas del prototipo"
+            detail="Total disponible"
           />
 
-          <Panel title="Stock de guias" hint="Tabla guides" className="col-span-7">
+          <Panel title="Stock de guias" className="col-span-7">
             {data.guides.length === 0 ? (
               <EmptyState text="No hay guias cargadas. Ejecuta supabase/seed.sql para datos de prueba." />
             ) : (
@@ -148,7 +142,7 @@ function Dashboard() {
             )}
           </Panel>
 
-          <Panel title="Resumen de cuentas" hint="Saldos calculados" className="col-span-5">
+          <Panel title="Resumen de cuentas" className="col-span-5">
             {data.accounts.length === 0 ? (
               <EmptyState text="No hay cuentas cargadas." />
             ) : (
@@ -174,16 +168,16 @@ function Dashboard() {
 
           <Panel
             title="Movimientos recientes"
-            hint={`${data.recentMovements.length} ultimos`}
+            hint={`${data.recentMovements.length} registros`}
             className="col-span-12"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-[oklch(0.28_0.1_250)]">
-                  Historial bajo demanda
+                  Historial de actividad
                 </div>
                 <div className="text-xs text-[oklch(0.42_0.08_250)]">
-                  Se oculta para mantener limpio el dashboard principal.
+                  Ultimos movimientos de inventario y cuentas.
                 </div>
               </div>
               <button
