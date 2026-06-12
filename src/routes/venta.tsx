@@ -19,7 +19,6 @@ function VentaPage() {
   const [guideId, setGuideId] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [method, setMethod] = useState<Metodo | null>(null);
-  const [student, setStudent] = useState("");
 
   // Estado del envío
   const [saving, setSaving] = useState(false);
@@ -59,7 +58,6 @@ function VentaPage() {
         guideId: selected.id,
         quantity,
         method,
-        student: student.trim() || undefined,
       });
       setFeedback({
         ok: true,
@@ -68,7 +66,6 @@ function VentaPage() {
       // reset suave y recarga de stock
       setQuantity(1);
       setMethod(null);
-      setStudent("");
       await loadGuides();
     } catch (e) {
       setFeedback({
@@ -182,22 +179,12 @@ function VentaPage() {
                 </div>
               </Step>
 
-              <Step n={4} label="Estudiante (opcional)">
-                <input
-                  className="aero-input w-full max-w-sm text-sm"
-                  placeholder="Nombre o registro del estudiante…"
-                  value={student}
-                  onChange={(e) => setStudent(e.target.value)}
-                />
-              </Step>
-
-              <Step n={5} label="Confirmación">
+              <Step n={4} label="Confirmación">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
                       setMethod(null);
                       setQuantity(1);
-                      setStudent("");
                       setFeedback(null);
                     }}
                     className="aero-btn aero-btn-danger px-4 py-2 text-sm"
@@ -240,7 +227,6 @@ function VentaPage() {
               k="Cuenta destino"
               v={method === "efectivo" ? "Caja del Centro" : method === "qr" ? "Banco" : "—"}
             />
-            {student.trim() && <Row k="Estudiante" v={student.trim()} />}
             <div className="mt-3 flex justify-between border-t border-[rgba(120,170,220,0.4)] pt-2">
               <span className="font-semibold">Total</span>
               <span className="font-mono font-bold text-[oklch(0.3_0.16_245)]">

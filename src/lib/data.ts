@@ -64,7 +64,6 @@ export interface RegistrarEntregaInput {
   guideId: number;
   quantity: number;
   method: "efectivo" | "qr";
-  student?: string;
 }
  
 /**
@@ -78,7 +77,7 @@ export interface RegistrarEntregaInput {
  * fallara tras descontar el stock, se revierte el descuento.
  */
 export async function registrarEntrega(input: RegistrarEntregaInput) {
-  const { guideId, quantity, method, student } = input;
+  const { guideId, quantity, method } = input;
  
   if (quantity <= 0) throw new Error("La cantidad debe ser mayor a 0");
  
@@ -105,7 +104,7 @@ export async function registrarEntrega(input: RegistrarEntregaInput) {
   if (updErr) throw new Error(updErr.message);
  
   // 3) registrar movimiento de salida
-  const nota = `Entrega · ${method}${student ? ` · ${student}` : ""}`;
+  const nota = `Entrega - ${method}`;
   const { error: movErr } = await supabase.from("inventory_movements").insert({
     guide_id: guideId,
     type: "salida",
@@ -133,7 +132,7 @@ export async function registrarEntrega(input: RegistrarEntregaInput) {
     account_id: accountId,
     type: "ingreso",
     amount: total,
-    note: `Venta ${method} - ${guide.name}${student ? ` - ${student}` : ""}`,
+    note: `Venta ${method} - ${guide.name}`,
   });
 
   if (accountErr) {
@@ -148,7 +147,7 @@ export async function registrarEntrega(input: RegistrarEntregaInput) {
     unit_price: guide.price,
     total,
     method,
-    student: student ?? null,
+    student: null,
   };
 }
  
