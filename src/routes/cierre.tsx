@@ -11,6 +11,7 @@ export const Route = createFileRoute("/cierre")({
 });
 
 type AccountMovement = { account_id: number; amount: number; type: "ingreso" | "salida" | "retiro" };
+type NewAccountMovement = { account_id: number; type: "salida"; amount: number; note: string };
 type CashClosure = {
   id: number;
   physical_cash: number;
@@ -159,7 +160,7 @@ function CierrePage() {
         difCentro < 0 && centroId
           ? {
               account_id: centroId,
-              type: "salida",
+              type: "salida" as const,
               amount: Math.abs(difCentro),
               note: "Perdida detectada en cierre de caja",
             }
@@ -167,12 +168,12 @@ function CierrePage() {
         difBanco < 0 && bancoId
           ? {
               account_id: bancoId,
-              type: "salida",
+              type: "salida" as const,
               amount: Math.abs(difBanco),
               note: "Diferencia negativa QR en cierre de caja",
             }
           : null,
-      ].filter(Boolean);
+      ].filter((movement): movement is NewAccountMovement => movement !== null);
 
       if (movements.length === 0) throw new Error("No se encontro cuenta para registrar perdida.");
 

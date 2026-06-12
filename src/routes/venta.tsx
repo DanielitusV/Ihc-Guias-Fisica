@@ -225,7 +225,7 @@ function VentaPage() {
             <Row k="Método" v={method === "efectivo" ? "Efectivo" : method === "qr" ? "QR" : "—"} />
             <Row
               k="Cuenta destino"
-              v={method === "efectivo" ? "Caja del Centro" : method === "qr" ? "Banco" : "—"}
+              v={method === "efectivo" ? "Cuenta Fisico" : method === "qr" ? "Cuenta QR" : "-"}
             />
             <div className="mt-3 flex justify-between border-t border-[rgba(120,170,220,0.4)] pt-2">
               <span className="font-semibold">Total</span>

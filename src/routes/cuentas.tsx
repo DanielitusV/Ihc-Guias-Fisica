@@ -31,7 +31,6 @@ type AccountState = {
 const createEmptyAccounts = (): Record<Cuenta, AccountState> => ({
   centro: { id: 0, nombre: accountNames.centro, sub: accountSubs.centro, saldo: 0, movs: [] },
   banco: { id: 0, nombre: accountNames.banco, sub: accountSubs.banco, saldo: 0, movs: [] },
-  encargado: { id: 0, nombre: accountNames.encargado, sub: accountSubs.encargado, saldo: 0, movs: [] },
 });
 
 const formatMoney = (value: number) =>
@@ -82,13 +81,12 @@ const buildAccountState = (
 function CuentasPage() {
   const [tab, setTab] = useState<Cuenta>("centro");
   const [accounts, setAccounts] = useState<Record<Cuenta, AccountState>>(createEmptyAccounts());
-  const [tipo, setTipo] = useState<"entrada" | "salida" | "retiro">("entrada");
+  const [tipo, setTipo] = useState<"entrada" | "salida">("entrada");
   const [monto, setMonto] = useState("");
   const [concepto, setConcepto] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [providerDebt, setProviderDebt] = useState(0);
 
   const currentAccount = accounts[tab];
 
@@ -103,29 +101,18 @@ function CuentasPage() {
       const existingAccounts = await ensureAccounts();
 
       const accountIds = existingAccounts.map((a) => a.id).filter(Boolean);
-      const [{ data: movements, error: movementsError }, { data: pendingOrders, error: ordersError }] =
-        await Promise.all([
-          supabase
-            .from("account_movements")
-            .select("id,account_id,type,amount,note,created_at")
-            .in("account_id", accountIds)
-            .order("created_at", { ascending: false }),
-          supabase.from("orders").select("total_cost,status"),
-        ]);
+      const { data: movements, error: movementsError } = await supabase
+        .from("account_movements")
+        .select("id,account_id,type,amount,note,created_at")
+        .in("account_id", accountIds)
+        .order("created_at", { ascending: false });
 
       if (movementsError) throw movementsError;
-      if (ordersError) throw ordersError;
 
       setAccounts(buildAccountState(existingAccounts, movements ?? []));
-      setProviderDebt(
-        (pendingOrders ?? [])
-          .filter((order) => String(order.status).toLowerCase() !== "pagado")
-          .reduce((sum, order) => sum + Number(order.total_cost), 0),
-      );
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setAccounts(createEmptyAccounts());
-      setProviderDebt(0);
     } finally {
       setLoading(false);
     }
@@ -145,52 +132,24 @@ function CuentasPage() {
       setError("No se encontro la cuenta seleccionada. Recarga la pagina.");
       return;
     }
-    if (tipo === "retiro" && tab !== "centro") {
-      setError("El retiro solo se realiza desde Caja del Centro.");
-      return;
-    }
-    if (tipo === "retiro" && !accounts.encargado.id) {
-      setError("No se encontro la cuenta del encargado. Recarga la pagina.");
-      return;
-    }
-
     setSaving(true);
     setError(null);
 
     try {
-      const payload =
-        tipo === "retiro"
-          ? [
-              {
-                account_id: currentAccount.id,
-                type: "retiro",
-                amount: parsed,
-                note: concepto.trim(),
-              },
-              {
-                account_id: accounts.encargado.id,
-                type: "ingreso",
-                amount: parsed,
-                note: `Retiro desde centro - ${concepto.trim()}`,
-              },
-            ]
-          : [
-              {
-                account_id: currentAccount.id,
-                type: tipo === "entrada" ? "ingreso" : "salida",
-                amount: parsed,
-                note: concepto.trim(),
-              },
-            ];
+      const payload = [
+        {
+          account_id: currentAccount.id,
+          type: tipo === "entrada" ? "ingreso" : "salida",
+          amount: parsed,
+          note: concepto.trim(),
+        },
+      ];
 
       const { error: insertError } = await supabase.from("account_movements").insert(payload);
       if (insertError) throw insertError;
 
       setMonto("");
       setConcepto("");
-      // FIX: resetear tipo a "entrada" despues de un retiro para evitar confusion
-      if (tipo === "retiro") setTipo("entrada");
-
       await loadAccounts();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -200,22 +159,15 @@ function CuentasPage() {
     }
   };
 
-  // FIX: al cambiar de tab, resetear tipo a "entrada" si el nuevo tab no es centro
   const handleSwitchTab = (k: Cuenta) => {
     setTab(k);
     setError(null);
-    if (k !== "centro" && tipo === "retiro") setTipo("entrada");
-  };
-
-  const handleRetiro = () => {
-    setTipo("retiro");
-    setConcepto("Retiro a encargado");
   };
 
   return (
     <AeroShell
-      title="Cuentas (3)"
-      subtitle="Cada movimiento se registra en una sola cuenta. Los retiros mueven dinero Centro -> Encargado."
+      title="Cuentas"
+      subtitle="Control de ingresos y salidas por metodo de pago."
       interactive
     >
       <div className="mb-3 flex gap-1">
@@ -300,16 +252,12 @@ function CuentasPage() {
                 </span>
                 <select
                   value={tipo}
-                  onChange={(e) => setTipo(e.target.value as "entrada" | "salida" | "retiro")}
+                  onChange={(e) => setTipo(e.target.value as "entrada" | "salida")}
                   className="aero-input mt-1 w-full"
                   disabled={saving}
                 >
                   <option value="entrada">Ingreso</option>
                   <option value="salida">Salida</option>
-                  {/* FIX: retiro solo disponible en tab centro */}
-                  {tab === "centro" && (
-                    <option value="retiro">Retiro encargado</option>
-                  )}
                 </select>
               </label>
               <label className="block">
@@ -371,31 +319,8 @@ function CuentasPage() {
               >
                 - Registrar salida
               </button>
-              {tab === "centro" && (
-                <button
-                  onClick={handleRetiro}
-                  className="aero-btn w-full py-2 text-sm"
-                  disabled={saving}
-                >
-                  Retiro encargado
-                </button>
-              )}
             </div>
           </Panel>
-
-          {tab === "encargado" && (
-            <Panel title="Deuda fotocopiadora">
-              <div className="py-2 text-center">
-                <div className="text-[11px] uppercase tracking-wide">Pendiente</div>
-                <div className="font-mono text-2xl font-bold text-[oklch(0.5_0.2_25)]">
-                  {formatMoney(providerDebt)}
-                </div>
-                <p className="mt-1 text-[11px] text-[oklch(0.45_0.08_250)]">
-                  Al pagar, registrar como salida en Encargado.
-                </p>
-              </div>
-            </Panel>
-          )}
         </div>
       </div>
     </AeroShell>

@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-export type Cuenta = "centro" | "banco" | "encargado";
+export type Cuenta = "centro" | "banco";
 export type AccountMovementType = "ingreso" | "salida" | "retiro";
 
 export type AccountRow = {
@@ -20,13 +20,11 @@ export type AccountMovement = {
 export const accountNames: Record<Cuenta, string> = {
   centro: "Cuenta Fisico",
   banco: "Cuenta QR",
-  encargado: "Cuenta Encargado",
 };
 
 export const accountSubs: Record<Cuenta, string> = {
   centro: "Dinero fisico recibido en el centro",
   banco: "Pagos recibidos por QR",
-  encargado: "Dinero retirado del centro para pagar a fotocopiadora",
 };
 
 export const accountKeys = Object.keys(accountNames) as Cuenta[];
