@@ -53,13 +53,14 @@ function relationName(relation: { name: string } | { name: string }[] | null) {
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
+  const dashboardAccountNames = [accountNames.centro, accountNames.banco];
   const [guidesResult, accountsResult, inventoryResult, accountMovementsResult] = await Promise.all(
     [
       supabase.from("guides").select("id,name,subject,price,stock").order("id"),
       supabase
         .from("accounts")
         .select("id,name")
-        .in("name", Object.values(accountNames))
+        .in("name", dashboardAccountNames)
         .order("name"),
       supabase
         .from("inventory_movements")

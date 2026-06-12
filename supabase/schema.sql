@@ -1,6 +1,6 @@
 create table guides (
   id bigint generated always as identity primary key,
-  name text not null,
+  name text not null unique,
   subject text not null,
   price numeric(10, 2) not null default 0,
   stock integer not null default 0,
