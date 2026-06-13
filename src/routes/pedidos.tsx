@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AeroShell, GuiaBadge, Panel } from "@/components/aero-shell";
 import { supabase } from "@/lib/supabase";
 
@@ -40,6 +40,7 @@ type GuideRecord = {
 
 type PedidoRow = {
   id: number;
+  orderId: number;
   fecha: string;
   tipo: GuiaTipo;
   cant: number;
@@ -52,8 +53,19 @@ type PedidoRow = {
 type QuantityState = Record<GuiaTipo, string>;
 
 const guideTypes = ["Gral", "I", "II", "III"] as const;
+const purchasePrices: Record<GuiaTipo, number> = {
+  Gral: 17.04,
+  I: 23.2,
+  II: 21.94,
+  III: 23.64,
+};
+
+const formatMoney = (value: number) =>
+  `Bs ${value.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
 function todayInputDate() {
-  return new Date().toISOString().slice(0, 10);
+  const boliviaOffsetMs = 4 * 60 * 60 * 1000;
+  return new Date(Date.now() - boliviaOffsetMs).toISOString().slice(0, 10);
 }
 
 function emptyQuantities(): QuantityState {
@@ -129,6 +141,7 @@ function toPedidoRows(order: OrderRecord, movements: OrderMovementRecord[]): Ped
     return [
       {
         id: order.id,
+        orderId: order.id,
         fecha: formatOrderDate(order.created_at),
         tipo: inferGuideTipoFromOrder(order),
         cant: 0,
@@ -142,11 +155,13 @@ function toPedidoRows(order: OrderRecord, movements: OrderMovementRecord[]): Ped
 
   return orderMovements.map((movement) => {
     const guide = relationGuide(movement.guides);
-    const price = toNumber(guide?.price);
+    const tipo = guide ? getGuideTipo(guide) : inferGuideTipoFromOrder(order);
+    const price = purchasePrices[tipo];
     return {
       id: movement.id,
+      orderId: order.id,
       fecha: formatOrderDate(movement.created_at || order.created_at),
-      tipo: guide ? getGuideTipo(guide) : inferGuideTipoFromOrder(order),
+      tipo,
       cant: Number(movement.quantity) || 0,
       precio: price,
       total: price * (Number(movement.quantity) || 0),
@@ -156,25 +171,11 @@ function toPedidoRows(order: OrderRecord, movements: OrderMovementRecord[]): Ped
   });
 }
 
-function toPedidoSummaryRow(order: OrderRecord): PedidoRow {
-  return {
-    id: -order.id,
-    fecha: formatOrderDate(order.created_at),
-    tipo: inferGuideTipoFromOrder(order),
-    cant: 0,
-    precio: 0,
-    total: toNumber(order.total_cost),
-    pagado: normalizeText(order.status).includes("PAGADO"),
-    com: order.supplier,
-  };
-}
-
 function PedidosPage() {
   const [pedidos, setPedidos] = useState<PedidoRow[]>([]);
   const [guides, setGuides] = useState<GuideRecord[]>([]);
   const [fecha, setFecha] = useState(todayInputDate);
   const [cantidades, setCantidades] = useState<QuantityState>(() => emptyQuantities());
-  const [comentario, setComentario] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -222,10 +223,9 @@ function PedidosPage() {
     }
 
     const movements = (movementsResponse.data ?? []) as OrderMovementRecord[];
-    const rows = ((ordersResponse.data ?? []) as OrderRecord[]).flatMap((order) => {
-      const detailRows = toPedidoRows(order, movements);
-      return detailRows.length > 1 ? [toPedidoSummaryRow(order), ...detailRows] : detailRows;
-    });
+    const rows = ((ordersResponse.data ?? []) as OrderRecord[]).flatMap((order) =>
+      toPedidoRows(order, movements),
+    );
 
     setPedidos(rows);
     setGuides((guidesResponse.data ?? []) as GuideRecord[]);
@@ -235,6 +235,11 @@ function PedidosPage() {
   useEffect(() => {
     void loadPedidos();
   }, [loadPedidos]);
+
+  const deudaProveedor = useMemo(
+    () => pedidos.filter((pedido) => !pedido.pagado).reduce((total, pedido) => total + pedido.total, 0),
+    [pedidos],
+  );
 
   function handleQuantityChange(tipo: GuiaTipo, value: string) {
     setCantidades((current) => ({
@@ -246,7 +251,6 @@ function PedidosPage() {
   function resetForm() {
     setFecha(todayInputDate());
     setCantidades(emptyQuantities());
-    setComentario("");
     setFormError(null);
   }
 
@@ -294,7 +298,7 @@ function PedidosPage() {
     const missingGuide = arrivals.find((arrival) => !guidesByTipo.has(arrival.tipo));
 
     if (missingGuide) {
-      setFormError(`No existe una guía ${missingGuide.tipo} registrada en Supabase.`);
+      setFormError(`No existe una guía ${missingGuide.tipo} registrada.`);
       return;
     }
 
@@ -305,11 +309,10 @@ function PedidosPage() {
     const stockBackups: Array<{ guideId: number; stock: number }> = [];
 
     try {
-      const createdAt = new Date(`${fecha}T12:00:00`).toISOString();
-      const supplier = comentario.trim() || "Fotocopiadora";
+      const createdAt = new Date(`${fecha}T12:00:00-04:00`).toISOString();
+      const supplier = "Fotocopiadora";
       const totalCost = arrivals.reduce((total, arrival) => {
-        const guide = guidesByTipo.get(arrival.tipo);
-        return total + toNumber(guide?.price) * arrival.quantity;
+        return total + purchasePrices[arrival.tipo] * arrival.quantity;
       }, 0);
 
       const { data: order, error: orderError } = await supabase
@@ -326,13 +329,13 @@ function PedidosPage() {
       if (orderError) throw orderError;
       createdOrderId = order.id;
 
-      const note = `Pedido #${order.id}${comentario.trim() ? `: ${comentario.trim()}` : ""}`;
+      const note = `Pedido #${order.id}`;
 
       const movements = arrivals.map((arrival) => {
         const guide = guidesByTipo.get(arrival.tipo);
 
         if (!guide) {
-          throw new Error(`No existe una guía ${arrival.tipo} registrada en Supabase.`);
+          throw new Error(`No existe una guía ${arrival.tipo} registrada.`);
         }
 
         return {
@@ -383,14 +386,35 @@ function PedidosPage() {
     }
   }
 
+  async function handleMarkPaid(orderId: number) {
+    setError(null);
+    const { error: updateError } = await supabase
+      .from("orders")
+      .update({ status: "pagado" })
+      .eq("id", orderId);
+
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+
+    await loadPedidos();
+  }
+
   return (
     <AeroShell
       title="Pedidos a fotocopiadora"
-      subtitle="Llegadas de guías y deuda con el proveedor"
+      subtitle="Llegadas de guias y deuda con el proveedor"
       interactive
     >
       <div className="grid grid-cols-12 gap-4">
         <Panel title="Historial de pedidos" className="col-span-8">
+          <div className="mb-3 rounded border border-[rgba(120,170,220,0.45)] bg-white/60 px-3 py-2 text-sm">
+            <span className="font-semibold text-[oklch(0.28_0.1_250)]">Deuda pendiente: </span>
+            <span className="font-mono font-bold text-[oklch(0.5_0.2_25)]">
+              {formatMoney(deudaProveedor)}
+            </span>
+          </div>
           <table className="aero-table">
             <thead>
               <tr>
@@ -400,7 +424,7 @@ function PedidosPage() {
                 <th>Precio U.</th>
                 <th>Total</th>
                 <th>Estado</th>
-                <th>Comentario</th>
+                <th>Accion</th>
               </tr>
             </thead>
             <tbody>
@@ -432,14 +456,24 @@ function PedidosPage() {
                     <GuiaBadge tipo={p.tipo} />
                   </td>
                   <td>{p.cant}</td>
-                  <td className="font-mono">Bs {p.precio}</td>
-                  <td className="font-mono font-semibold">Bs {p.total}</td>
+                  <td className="font-mono">{formatMoney(p.precio)}</td>
+                  <td className="font-mono font-semibold">{formatMoney(p.total)}</td>
                   <td>
                     <span className={`aero-badge ${p.pagado ? "badge-gral" : "badge-fis3"}`}>
                       {p.pagado ? "Pagado" : "Pendiente"}
                     </span>
                   </td>
-                  <td className="text-xs">{p.com}</td>
+                  <td className="text-xs">
+                    {!p.pagado && (
+                      <button
+                        type="button"
+                        className="aero-btn px-2 py-1 text-xs font-semibold"
+                        onClick={() => void handleMarkPaid(p.orderId)}
+                      >
+                        Marcar pagado
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -474,17 +508,6 @@ function PedidosPage() {
                 </div>
               ))}
             </div>
-            <label className="block">
-              <span className="text-[11px] uppercase tracking-wide text-[oklch(0.45_0.08_250)]">
-                Comentario
-              </span>
-              <input
-                className="aero-input w-full"
-                placeholder="Ej: guía incorrecta, reposición…"
-                value={comentario}
-                onChange={(event) => setComentario(event.target.value)}
-              />
-            </label>
             {formError && <p className="text-xs text-[oklch(0.5_0.2_25)]">{formError}</p>}
             <div className="flex gap-2 pt-1">
               <button
