@@ -53,12 +53,13 @@ type PedidoRow = {
 type QuantityState = Record<GuiaTipo, string>;
 
 const guideTypes = ["Gral", "I", "II", "III"] as const;
-const purchasePrices: Record<GuiaTipo, number> = {
+const defaultPurchasePrices: Record<GuiaTipo, number> = {
   Gral: 17.04,
   I: 23.2,
   II: 21.94,
   III: 23.64,
 };
+const priceStorageKey = "cef-purchase-prices";
 
 const formatMoney = (value: number) =>
   `Bs ${value.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -75,6 +76,29 @@ function emptyQuantities(): QuantityState {
     II: "0",
     III: "0",
   };
+}
+
+function defaultPriceInputs(): QuantityState {
+  return {
+    Gral: String(defaultPurchasePrices.Gral),
+    I: String(defaultPurchasePrices.I),
+    II: String(defaultPurchasePrices.II),
+    III: String(defaultPurchasePrices.III),
+  };
+}
+
+function loadPriceInputs(): QuantityState {
+  if (typeof window === "undefined") return defaultPriceInputs();
+  try {
+    return { ...defaultPriceInputs(), ...JSON.parse(window.localStorage.getItem(priceStorageKey) || "{}") };
+  } catch {
+    return defaultPriceInputs();
+  }
+}
+
+function priceFromNote(note: string | null, tipo: GuiaTipo) {
+  const match = note?.match(new RegExp(`(?:^|[;| ])${tipo}=([0-9]+(?:\\.[0-9]+)?)`));
+  return match ? Number(match[1]) : null;
 }
 
 function normalizeText(value: string) {
@@ -156,7 +180,7 @@ function toPedidoRows(order: OrderRecord, movements: OrderMovementRecord[]): Ped
   return orderMovements.map((movement) => {
     const guide = relationGuide(movement.guides);
     const tipo = guide ? getGuideTipo(guide) : inferGuideTipoFromOrder(order);
-    const price = purchasePrices[tipo];
+    const price = priceFromNote(movement.note, tipo) ?? defaultPurchasePrices[tipo];
     return {
       id: movement.id,
       orderId: order.id,
@@ -176,6 +200,8 @@ function PedidosPage() {
   const [guides, setGuides] = useState<GuideRecord[]>([]);
   const [fecha, setFecha] = useState(todayInputDate);
   const [cantidades, setCantidades] = useState<QuantityState>(() => emptyQuantities());
+  const [priceInputs, setPriceInputs] = useState<QuantityState>(() => loadPriceInputs());
+  const [showPrices, setShowPrices] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -236,6 +262,10 @@ function PedidosPage() {
     void loadPedidos();
   }, [loadPedidos]);
 
+  useEffect(() => {
+    window.localStorage.setItem(priceStorageKey, JSON.stringify(priceInputs));
+  }, [priceInputs]);
+
   const deudaProveedor = useMemo(
     () => pedidos.filter((pedido) => !pedido.pagado).reduce((total, pedido) => total + pedido.total, 0),
     [pedidos],
@@ -246,6 +276,17 @@ function PedidosPage() {
       ...current,
       [tipo]: value.replace(/[^\d]/g, ""),
     }));
+  }
+
+  function handlePriceChange(tipo: GuiaTipo, value: string) {
+    setPriceInputs((current) => ({
+      ...current,
+      [tipo]: value.replace(/[^0-9.,]/g, ""),
+    }));
+  }
+
+  function purchasePrice(tipo: GuiaTipo) {
+    return Number(priceInputs[tipo].replace(",", ".")) || 0;
   }
 
   function resetForm() {
@@ -294,6 +335,12 @@ function PedidosPage() {
       return;
     }
 
+    const invalidPrice = arrivals.find((arrival) => purchasePrice(arrival.tipo) <= 0);
+    if (invalidPrice) {
+      setFormError(`Revisa el precio de Fis ${invalidPrice.tipo}.`);
+      return;
+    }
+
     const guidesByTipo = new Map(guides.map((guide) => [getGuideTipo(guide), guide]));
     const missingGuide = arrivals.find((arrival) => !guidesByTipo.has(arrival.tipo));
 
@@ -312,7 +359,7 @@ function PedidosPage() {
       const createdAt = new Date(`${fecha}T12:00:00-04:00`).toISOString();
       const supplier = "Fotocopiadora";
       const totalCost = arrivals.reduce((total, arrival) => {
-        return total + purchasePrices[arrival.tipo] * arrival.quantity;
+        return total + purchasePrice(arrival.tipo) * arrival.quantity;
       }, 0);
 
       const { data: order, error: orderError } = await supabase
@@ -329,7 +376,8 @@ function PedidosPage() {
       if (orderError) throw orderError;
       createdOrderId = order.id;
 
-      const note = `Pedido #${order.id}`;
+      const priceNote = guideTypes.map((tipo) => `${tipo}=${purchasePrice(tipo)}`).join(";");
+      const note = `Pedido #${order.id} | ${priceNote}`;
 
       const movements = arrivals.map((arrival) => {
         const guide = guidesByTipo.get(arrival.tipo);
@@ -508,6 +556,28 @@ function PedidosPage() {
                 </div>
               ))}
             </div>
+            <button
+              type="button"
+              className="aero-btn w-full py-1.5 text-sm"
+              onClick={() => setShowPrices((visible) => !visible)}
+            >
+              {showPrices ? "Ocultar precios" : "Editar precios de compra"}
+            </button>
+            {showPrices && (
+              <div className="grid grid-cols-4 gap-2 rounded border border-[rgba(120,170,220,0.45)] bg-white/50 p-2 text-xs">
+                {guideTypes.map((t) => (
+                  <label key={t} className="block">
+                    <span className="mb-1 block text-center font-semibold">Fis {t}</span>
+                    <input
+                      className="aero-input w-full text-center"
+                      inputMode="decimal"
+                      value={priceInputs[t]}
+                      onChange={(event) => handlePriceChange(t, event.target.value)}
+                    />
+                  </label>
+                ))}
+              </div>
+            )}
             {formError && <p className="text-xs text-[oklch(0.5_0.2_25)]">{formError}</p>}
             <div className="flex gap-2 pt-1">
               <button
