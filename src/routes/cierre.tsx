@@ -11,7 +11,6 @@ export const Route = createFileRoute("/cierre")({
 });
 
 type AccountMovement = { account_id: number; amount: number; type: "ingreso" | "salida" | "retiro" };
-type NewAccountMovement = { account_id: number; type: "salida"; amount: number; note: string };
 type CashClosure = {
   id: number;
   physical_cash: number;
@@ -23,6 +22,7 @@ type CashClosure = {
 
 const GUIDE_TYPES = ["Gral", "I", "II", "III"] as const;
 const EMPTY_GUIDE_COUNTS: Record<GuiaTipo, number> = { Gral: 0, I: 0, II: 0, III: 0 };
+const EMPTY_GUIDE_IDS: Record<GuiaTipo, number> = { Gral: 0, I: 0, II: 0, III: 0 };
 
 const formatMoney = (value: number) =>
   `Bs ${value.toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -31,6 +31,7 @@ function CierrePage() {
   const [expectedGuides, setExpectedGuides] = useState<Record<GuiaTipo, number>>({
     ...EMPTY_GUIDE_COUNTS,
   });
+  const [guideIds, setGuideIds] = useState<Record<GuiaTipo, number>>({ ...EMPTY_GUIDE_IDS });
   const [counts, setCounts] = useState<Record<GuiaTipo, number>>({ ...EMPTY_GUIDE_COUNTS });
   const [contadoCentro, setContadoCentro] = useState(0);
   const [reportadoBanco, setReportadoBanco] = useState(0);
@@ -63,8 +64,16 @@ function CierrePage() {
         }),
         { ...EMPTY_GUIDE_COUNTS },
       );
+      const ids = guides.reduce<Record<GuiaTipo, number>>(
+        (acc, guide) => ({
+          ...acc,
+          [guide.tipo]: guide.id,
+        }),
+        { ...EMPTY_GUIDE_IDS },
+      );
 
       setExpectedGuides(guideCounts);
+      setGuideIds(ids);
       if (!userEditedGuides.current) setCounts(guideCounts);
 
       const centroId = accountIdByKey(accounts, "centro");
@@ -94,9 +103,8 @@ function CierrePage() {
       setExpectedCentro(saldoCentro);
       setExpectedBanco(saldoBanco);
 
-      // FIX: solo inicializar los campos contados si el usuario no los edito manualmente
-      if (!userEditedCentro.current) setContadoCentro(saldoCentro);
-      if (!userEditedBanco.current) setReportadoBanco(saldoBanco);
+      if (!userEditedCentro.current) setContadoCentro(0);
+      if (!userEditedBanco.current) setReportadoBanco(0);
 
       const { data: closures, error: closuresError } = await supabase
         .from("cash_closures")
@@ -116,11 +124,67 @@ function CierrePage() {
     setSaving(true);
     setError(null);
     try {
+      const accounts = await ensureAccounts();
+      const centroId = accountIdByKey(accounts, "centro");
+      const bancoId = accountIdByKey(accounts, "banco");
+
+      const guideAdjustments = guideRows.filter((row) => row.diff !== 0);
+      for (const row of guideAdjustments) {
+        const guideId = guideIds[row.tipo];
+        if (!guideId) throw new Error(`No se encontro la guia ${row.tipo}.`);
+
+        const type = row.diff > 0 ? "entrada" : "salida";
+        const quantity = Math.abs(row.diff);
+
+        const { error: movementError } = await supabase.from("inventory_movements").insert({
+          guide_id: guideId,
+          type,
+          quantity,
+          note: `Ajuste cierre de caja (${row.diff > 0 ? "sobrante" : "faltante"})`,
+        });
+        if (movementError) throw movementError;
+
+        const { error: stockError } = await supabase
+          .from("guides")
+          .update({ stock: row.contado })
+          .eq("id", guideId);
+        if (stockError) throw stockError;
+      }
+
+      const moneyAdjustments = [
+        Math.abs(difCentro) >= 0.005 && centroId
+          ? {
+              account_id: centroId,
+              type: difCentro > 0 ? ("ingreso" as const) : ("salida" as const),
+              amount: Math.abs(difCentro),
+              note: `Ajuste cierre caja fisica (${difCentro > 0 ? "sobrante" : "faltante"})`,
+            }
+          : null,
+        Math.abs(difBanco) >= 0.005 && bancoId
+          ? {
+              account_id: bancoId,
+              type: difBanco > 0 ? ("ingreso" as const) : ("salida" as const),
+              amount: Math.abs(difBanco),
+              note: `Ajuste cierre banco QR (${difBanco > 0 ? "sobrante" : "faltante"})`,
+            }
+          : null,
+      ].filter((movement): movement is {
+        account_id: number;
+        type: "ingreso" | "salida";
+        amount: number;
+        note: string;
+      } => movement !== null);
+
+      if (moneyAdjustments.length > 0) {
+        const { error: moneyError } = await supabase.from("account_movements").insert(moneyAdjustments);
+        if (moneyError) throw moneyError;
+      }
+
       const note = [
         `Guias ${guideRows.map((row) => `${row.tipo}:${row.contado}/${row.esperado}`).join(", ")}`,
         `Dif caja ${difCentro.toFixed(2)}`,
         `Dif banco ${difBanco.toFixed(2)}`,
-        cajaCuadra ? "Cuadra" : "No cuadra",
+        "Ajustado",
       ].join(" | ");
 
       const { error: insertError } = await supabase.from("cash_closures").insert([
@@ -136,52 +200,8 @@ function CierrePage() {
       userEditedCentro.current = false;
       userEditedBanco.current = false;
       userEditedGuides.current = false;
-      await loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleRegisterLoss = async () => {
-    if (difCentro >= 0 && difBanco >= 0) {
-      setError("No hay perdida negativa para registrar.");
-      return;
-    }
-
-    setSaving(true);
-    setError(null);
-    try {
-      const accounts = await ensureAccounts();
-      const centroId = accountIdByKey(accounts, "centro");
-      const bancoId = accountIdByKey(accounts, "banco");
-      const movements = [
-        difCentro < 0 && centroId
-          ? {
-              account_id: centroId,
-              type: "salida" as const,
-              amount: Math.abs(difCentro),
-              note: "Perdida detectada en cierre de caja",
-            }
-          : null,
-        difBanco < 0 && bancoId
-          ? {
-              account_id: bancoId,
-              type: "salida" as const,
-              amount: Math.abs(difBanco),
-              note: "Diferencia negativa QR en cierre de caja",
-            }
-          : null,
-      ].filter((movement): movement is NewAccountMovement => movement !== null);
-
-      if (movements.length === 0) throw new Error("No se encontro cuenta para registrar perdida.");
-
-      const { error: insertError } = await supabase.from("account_movements").insert(movements);
-      if (insertError) throw insertError;
-
-      userEditedCentro.current = false;
-      userEditedBanco.current = false;
+      setContadoCentro(0);
+      setReportadoBanco(0);
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -253,6 +273,7 @@ function CierrePage() {
                       min={0}
                       step={1}
                       value={contado}
+                      onFocus={(event) => event.currentTarget.select()}
                       onChange={(e) =>
                         {
                           userEditedGuides.current = true;
@@ -296,6 +317,7 @@ function CierrePage() {
                 min={0}
                 step="0.01"
                 value={contadoCentro}
+                onFocus={(event) => event.currentTarget.select()}
                 onChange={(e) => {
                   userEditedCentro.current = true;
                   setContadoCentro(Math.max(0, Number(e.target.value) || 0));
@@ -333,6 +355,7 @@ function CierrePage() {
                   min={0}
                   step="0.01"
                   value={reportadoBanco}
+                  onFocus={(event) => event.currentTarget.select()}
                   onChange={(e) => {
                     userEditedBanco.current = true;
                     setReportadoBanco(Math.max(0, Number(e.target.value) || 0));
@@ -380,24 +403,17 @@ function CierrePage() {
             <p className="mt-1 text-xs text-[oklch(0.45_0.08_250)]">
               {cajaCuadra
                 ? "Las cuentas coinciden con lo registrado."
-                : "Revisa los valores antes de guardar el cierre."}
+                : "Al guardar se registrara el ajuste del cierre."}
             </p>
           </div>
 
           <div className="mt-3 flex flex-col gap-2">
             <button
-              className="aero-btn aero-btn-danger px-3 py-1.5 text-sm"
-              disabled={saving}
-              onClick={() => void handleRegisterLoss()}
-            >
-              Registrar perdida
-            </button>
-            <button
               onClick={handleSaveClosure}
               className="aero-btn aero-btn-confirm px-4 py-1.5 text-sm font-semibold"
               disabled={saving}
             >
-              {saving ? "Guardando..." : "Guardar cierre del dia"}
+              {saving ? "Guardando..." : "Ajustar y guardar cierre"}
             </button>
 
             {error && (
