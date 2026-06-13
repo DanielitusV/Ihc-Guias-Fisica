@@ -80,15 +80,17 @@ const buildAccountState = (
 
 function CuentasPage() {
   const [tab, setTab] = useState<Cuenta>("centro");
+  const [movementAccount, setMovementAccount] = useState<Cuenta>("centro");
   const [accounts, setAccounts] = useState<Record<Cuenta, AccountState>>(createEmptyAccounts());
   const [tipo, setTipo] = useState<"entrada" | "salida">("entrada");
   const [monto, setMonto] = useState("");
-  const [concepto, setConcepto] = useState("");
+  const [razon, setRazon] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const currentAccount = accounts[tab];
+  const targetAccount = accounts[movementAccount];
 
   useEffect(() => {
     loadAccounts();
@@ -124,11 +126,11 @@ function CuentasPage() {
       setError("El monto debe ser mayor a 0.");
       return;
     }
-    if (!concepto.trim()) {
-      setError("El concepto es obligatorio.");
+    if (!razon.trim()) {
+      setError("La razon es obligatoria.");
       return;
     }
-    if (!currentAccount.id) {
+    if (!targetAccount.id) {
       setError("No se encontro la cuenta seleccionada. Recarga la pagina.");
       return;
     }
@@ -138,10 +140,10 @@ function CuentasPage() {
     try {
       const payload = [
         {
-          account_id: currentAccount.id,
+          account_id: targetAccount.id,
           type: tipo === "entrada" ? "ingreso" : "salida",
           amount: parsed,
-          note: concepto.trim(),
+          note: razon.trim(),
         },
       ];
 
@@ -149,7 +151,8 @@ function CuentasPage() {
       if (insertError) throw insertError;
 
       setMonto("");
-      setConcepto("");
+      setRazon("");
+      setTab(movementAccount);
       await loadAccounts();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -193,7 +196,7 @@ function CuentasPage() {
               <thead>
                 <tr>
                   <th>Fecha</th>
-                  <th>Concepto</th>
+                  <th>Detalle</th>
                   <th className="text-right">Monto (Bs)</th>
                 </tr>
               </thead>
@@ -253,8 +256,9 @@ function CuentasPage() {
                 <select
                   value={tipo}
                   onChange={(e) => setTipo(e.target.value as "entrada" | "salida")}
-                  className="aero-input mt-1 w-full"
+                  className="aero-input mt-1 h-9 w-full"
                   disabled={saving}
+                  required
                 >
                   <option value="entrada">Ingreso</option>
                   <option value="salida">Salida</option>
@@ -271,23 +275,43 @@ function CuentasPage() {
                     setMonto(value);
                   }}
                   placeholder="0.00"
-                  className="aero-input mt-1 w-full text-right"
+                  className="aero-input mt-1 h-9 w-full text-right"
                   disabled={saving}
                   type="text"
                   inputMode="decimal"
+                  required
                 />
               </label>
               <label className="block">
                 <span className="text-xs uppercase tracking-wide text-[oklch(0.45_0.08_250)]">
-                  Concepto
+                  Cuenta
+                </span>
+                <select
+                  value={movementAccount}
+                  onChange={(e) => setMovementAccount(e.target.value as Cuenta)}
+                  className="aero-input mt-1 h-9 w-full"
+                  disabled={saving}
+                  required
+                >
+                  {(Object.keys(accounts) as Cuenta[]).map((k) => (
+                    <option key={k} value={k}>
+                      {accounts[k].nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-xs uppercase tracking-wide text-[oklch(0.45_0.08_250)]">
+                  Razon
                 </span>
                 <input
-                  value={concepto}
-                  onChange={(e) => setConcepto(e.target.value)}
-                  placeholder="Descripcion breve"
-                  className="aero-input mt-1 w-full"
+                  value={razon}
+                  onChange={(e) => setRazon(e.target.value)}
+                  placeholder="Ej. Pago proveedor, ajuste, deposito..."
+                  className="aero-input mt-1 h-9 w-full"
                   disabled={saving}
                   maxLength={120}
+                  required
                 />
               </label>
               <button
