@@ -84,11 +84,16 @@
     {\small Cochabamba -- Bolivia}\\
 \end{titlepage}
 
+\tableofcontents
+\newpage
+
 El presente informe corresponde a la etapa de investigación de usuarios del proyecto. El objetivo de esta fase fue conocer mejor a las personas relacionadas con el proceso de distribución presencial de guías académicas de Física, identificando sus necesidades, dificultades y expectativas frente al sistema actual de control. Para ello, se consideraron dos grupos de usuarios: los encargados del Centro de Estudiantes de Física, como usuarios principales del sistema administrativo, y los estudiantes compradores, como usuarios secundarios dentro del proceso de compra presencial.
 
 \section{Metodología}
 
-La investigación se realizó mediante encuestas aplicadas a los dos grupos de usuarios identificados. En primer lugar, se aplicó una encuesta a estudiantes compradores de guías de laboratorio de Física, con un total de 25 respuestas. Esta encuesta permitió conocer la experiencia de compra presencial, la claridad sobre la disponibilidad de guías y las principales dudas que tienen los estudiantes antes de acercarse al Centro de Estudiantes.
+La investigación se desarrolló con una metodología de diseño centrado en el usuario, con enfoque exploratorio y descriptivo. Esta metodología permite comprender el contexto real de uso antes de proponer una interfaz, identificando quiénes participan en el proceso, qué tareas realizan, qué dificultades enfrentan y qué información necesitan para completar sus actividades de forma clara. El desarrollo del trabajo se organizó en cuatro etapas: identificación de usuarios, recolección de información mediante encuestas, análisis de necesidades y problemas, y construcción de escenarios de uso para orientar el diseño posterior del prototipo.
+
+La recolección de información se realizó mediante encuestas aplicadas a los dos grupos de usuarios identificados. En primer lugar, se aplicó una encuesta a estudiantes compradores de guías de laboratorio de Física, con un total de 25 respuestas. Esta encuesta permitió conocer la experiencia de compra presencial, la claridad sobre la disponibilidad de guías y las principales dudas que tienen los estudiantes antes de acercarse al Centro de Estudiantes.
 
 En segundo lugar, se aplicó una encuesta a encargados del Centro de Estudiantes de Física, con un total de 7 respuestas. Esta encuesta se enfocó en el uso del sistema actual de control de guías, entendido como una planilla de Excel con funciones automatizadas. La intención no fue desvalorizar dicho sistema, sino identificar qué aspectos resultan útiles, qué elementos conviene conservar y qué necesidades podrían considerarse en una futura propuesta de interfaz administrativa.
 
@@ -102,6 +107,7 @@ A continuación, presentamos los resultados más relevantes de ambas encuestas, 
     \caption{Encargados — Pregunta 1: Distribución de tareas realizadas (ventas, inventario, cierres).}
     \label{fig:preg1_enc}
 \end{figure}
+\noindent\textit{La figura representa las tareas que realizan los encargados dentro del proceso administrativo, mostrando que el registro de ventas y el control de guías son actividades centrales para el sistema.}
 
 \begin{figure}[!htbp]
     \centering
@@ -109,6 +115,7 @@ A continuación, presentamos los resultados más relevantes de ambas encuestas, 
     \caption{Encargados — Pregunta 3: Frecuencia de tareas complementarias (pagos, salidas, adquisiciones).}
     \label{fig:preg3_enc}
 \end{figure}
+\noindent\textit{La figura muestra la frecuencia con la que los encargados realizan tareas complementarias, lo cual ayuda a identificar funciones que deben estar disponibles sin volver compleja la interfaz.}
 
 \begin{figure}[!htbp]
     \centering
@@ -116,6 +123,7 @@ A continuación, presentamos los resultados más relevantes de ambas encuestas, 
     \caption{Encargados — Pregunta 4: Claridad del cierre de caja (escala de entendimiento).}
     \label{fig:preg4_enc}
 \end{figure}
+\noindent\textit{La figura evidencia el nivel de claridad que tienen los encargados sobre el cierre de caja, señalando la necesidad de presentar este proceso de forma guiada y comprensible.}
 
 \begin{figure}[!htbp]
     \centering
@@ -123,6 +131,7 @@ A continuación, presentamos los resultados más relevantes de ambas encuestas, 
     \caption{Compradores — Pregunta 3: Proporción de estudiantes por materia (Física General, Física Básica I/II/III).}
     \label{fig:preg3_comp}
 \end{figure}
+\noindent\textit{La figura representa la distribución de compradores según la materia cursada, información útil para ordenar las guías por asignatura y facilitar su búsqueda.}
 
 \begin{figure}[!htbp]
     \centering
@@ -130,6 +139,7 @@ A continuación, presentamos los resultados más relevantes de ambas encuestas, 
     \caption{Compradores — Pregunta 4: Dudas sobre disponibilidad antes de acudir (sí/no).}
     \label{fig:preg4_comp}
 \end{figure}
+\noindent\textit{La figura muestra si los estudiantes conocían la disponibilidad de la guía antes de ir al Centro de Estudiantes, destacando la importancia de mejorar la visibilidad del stock.}
 
 \begin{figure}[!htbp]
     \centering
@@ -137,6 +147,7 @@ A continuación, presentamos los resultados más relevantes de ambas encuestas, 
     \caption{Compradores — Pregunta 5: Otras dificultades reportadas (identificación de guía, información previa).}
     \label{fig:preg5_comp}
 \end{figure}
+\noindent\textit{La figura resume dificultades adicionales de los compradores, especialmente la identificación de la guía correcta y la falta de información previa antes de la compra.}
 
 \newpage
 
@@ -260,6 +271,7 @@ El mapa muestra que los estudiantes necesitan información clara antes de acudir
     \caption{Mapa de empatía de los estudiantes compradores de guías de Física.}
     \label{fig:mapa_empatia_compradores}
 \end{figure}
+\noindent\textit{La figura representa la perspectiva de los estudiantes compradores, resumiendo sus dudas, frustraciones y expectativas durante el proceso presencial de adquisición de guías.}
 
 \FloatBarrier
 
@@ -275,6 +287,7 @@ El mapa destaca que los encargados necesitan un sistema que sea fácil de entend
     \centering
     \includegraphics[width=0.92\textwidth,height=0.38\textheight,keepaspectratio]{mapaEmpatiaEncargados.png}
     \caption{Mapa de empatía de los encargados del Centro de Estudiantes.}
+    \caption*{La figura representa la perspectiva de los encargados, destacando sus responsabilidades administrativas, sus necesidades de control y sus dificultades al manejar registros y cierres.}
     \label{fig:mapa_empatia_encargados}
 \end{figure}
 
@@ -284,11 +297,11 @@ El mapa destaca que los encargados necesitan un sistema que sea fácil de entend
 
 \subsection{Escenario 1: Registro de venta de una guía}
 
-Un estudiante se acerca al Centro de Estudiantes de Física para comprar una guía de laboratorio. El encargado consulta el tipo de guía solicitada, registra la venta en el sistema actual, selecciona el tipo de pago correspondiente y entrega la guía física. El sistema debe actualizar el stock y reflejar el movimiento de dinero de forma clara.
+Un estudiante se acerca al Centro de Estudiantes de Física para comprar una guía de laboratorio. Primero, el encargado solicita la información necesaria sobre la guía que busca: materia, número o título de la guía, docente o grupo si corresponde. Con esos datos verifica que la guía sea la correcta y que exista stock disponible. Luego registra la venta, selecciona el tipo de pago correspondiente, entrega la guía física y el sistema actualiza el stock y el movimiento de dinero de forma clara.
 
 \subsection{Escenario 2: Consulta de disponibilidad}
 
-Antes o durante la atención, el encargado necesita verificar si una guía se encuentra disponible. Para ello revisa el stock actual y confirma si existe cantidad suficiente. Este escenario es importante porque los compradores indicaron que una de sus principales dudas es saber si la guía aún está disponible.
+Antes o durante la atención, un estudiante pregunta si una guía específica está disponible. El encargado ingresa o selecciona la materia y el nombre de la guía en el sistema, revisa el stock actual y confirma la cantidad disponible. Si existe stock, informa al estudiante que puede realizar la compra; si no existe stock, comunica que la guía no está disponible y puede registrar la necesidad de reposición. Este escenario es importante porque los compradores indicaron que una de sus principales dudas es saber si la guía aún está disponible.
 
 \subsection{Escenario 3: Cierre de caja}
 
