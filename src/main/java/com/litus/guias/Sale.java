@@ -25,6 +25,10 @@ public class Sale {
     }
 
     public void cancel(String reason) {
+        if(reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Cancellation reason is required");
+        }
+
         this.status = SaleStatus.CANCELLED;
         this.cancellationReason = reason;
     }

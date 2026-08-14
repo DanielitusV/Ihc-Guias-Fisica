@@ -1,21 +1,23 @@
 package com.litus.guias;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class SaleTest {
 
-    LocalDateTime date = LocalDateTime.of(
-            2026, 8, 14,
-            19, 0
-    );
+    private LocalDateTime date;
+    private Sale sale;
 
-    @Test
-    public void saleKeepsThePriceUsedAtTheMomentOfSale() {
-        Sale sale = new Sale(
+    @BeforeEach
+    public void setUp() {
+        date = LocalDateTime.of(2026, 8, 14, 19, 0);
+
+        sale = new Sale(
                 1,
                 10,
                 new BigDecimal("25.00"),
@@ -23,6 +25,10 @@ public class SaleTest {
                 date,
                 SaleStatus.ACTIVE
         );
+    }
+
+    @Test
+    public void saleKeepsThePriceUsedAtTheMomentOfSale() {
 
         assertEquals(
                 new BigDecimal("25.00"),
@@ -41,14 +47,6 @@ public class SaleTest {
 
     @Test
     public void cancellingSaleChangesStatusAndStoresReason() {
-        Sale sale = new Sale(
-                1,
-                10,
-                new BigDecimal("25.00"),
-                PaymentMethod.QR,
-                date,
-                SaleStatus.ACTIVE
-        );
 
         sale.cancel("Venta registrada por error");
 
@@ -56,6 +54,14 @@ public class SaleTest {
         assertEquals(
                 "Venta registrada por error",
                 sale.getCancellationReason()
+        );
+    }
+
+    @Test
+    public void cancellingSaleWithoutReasonIsNotAllowed() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> sale.cancel("")
         );
     }
 }

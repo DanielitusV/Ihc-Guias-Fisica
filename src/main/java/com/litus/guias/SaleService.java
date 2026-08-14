@@ -1,9 +1,25 @@
 package com.litus.guias;
 
+import java.time.LocalDateTime;
+
 public class SaleService {
 
-    public void registerSale(Guide guide, Account account) {
+    public Sale registerSale(
+        Guide guide,
+        Account account,
+        PaymentMethod paymentMethod,
+        LocalDateTime createdAt
+    ) {
         guide.sellOne();
         account.addIncome(guide.getCurrentPrice());
+
+        return new Sale(
+                0,
+                guide.getId(),
+                guide.getCurrentPrice(),
+                paymentMethod,
+                createdAt,
+                SaleStatus.ACTIVE
+        );
     }
 }

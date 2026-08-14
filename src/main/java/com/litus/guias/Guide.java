@@ -34,4 +34,8 @@ public class Guide {
     public BigDecimal getCurrentPrice() {
         return currentPrice;
     }
+
+    public long getId() {
+        return id;
+    }
 }
