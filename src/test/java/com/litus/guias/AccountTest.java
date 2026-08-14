@@ -22,4 +22,20 @@ public class AccountTest {
                 account.getBalance()
         );
     }
+
+    @Test
+    public void expenseDecreasesBalance() {
+        Account account = new Account(
+                1,
+                "Efectivo",
+                new BigDecimal("100.00")
+        );
+
+        account.addExpense(new BigDecimal("30.00"));
+
+        assertEquals(
+                new BigDecimal("70.00"),
+                account.getBalance()
+        );
+    }
 }

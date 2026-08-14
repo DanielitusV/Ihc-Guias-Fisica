@@ -18,6 +18,10 @@ public class Account {
         this.balance = balance.add(amount);
     }
 
+    public void addExpense(BigDecimal amount) {
+        this.balance = balance.subtract(amount);
+    }
+
     public BigDecimal getBalance() {
         return this.balance;
     }
