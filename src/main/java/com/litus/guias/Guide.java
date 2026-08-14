@@ -18,4 +18,12 @@ public class Guide {
         this.currentPrice = currentPrice;
         this.stock = stock;
     }
+
+    public void sellOne() {
+        this.stock--;
+    }
+
+    public int getStock() {
+        return stock;
+    }
 }
