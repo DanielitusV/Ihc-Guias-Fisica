@@ -30,4 +30,8 @@ public class Guide {
     public int getStock() {
         return stock;
     }
+
+    public BigDecimal getCurrentPrice() {
+        return currentPrice;
+    }
 }
