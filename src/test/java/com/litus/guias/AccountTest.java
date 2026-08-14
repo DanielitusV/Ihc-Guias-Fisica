@@ -53,4 +53,18 @@ public class AccountTest {
                 () -> account.addExpense(new BigDecimal("-20.00"))
         );
     }
+
+    @Test
+    public void incomeAmountMustBePositive() {
+        Account account = new Account(
+                1,
+                "Efectivo",
+                new BigDecimal("100.00")
+        );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> account.addIncome(BigDecimal.ZERO)
+        );
+    }
 }
