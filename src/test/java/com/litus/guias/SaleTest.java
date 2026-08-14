@@ -4,8 +4,14 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public class SaleTest {
+
+    LocalDateTime date = LocalDateTime.of(
+            2026, 8, 14,
+            19, 0
+    );
 
     @Test
     public void saleKeepsThePriceUsedAtTheMomentOfSale() {
@@ -13,7 +19,9 @@ public class SaleTest {
                 1,
                 10,
                 new BigDecimal("25.00"),
-                PaymentMethod.QR
+                PaymentMethod.QR,
+                date,
+                SaleStatus.ACTIVE
         );
 
         assertEquals(
@@ -25,5 +33,9 @@ public class SaleTest {
                 PaymentMethod.QR,
                 sale.getPaymentMethod()
         );
+
+        assertEquals(date, sale.getCreatedAt());
+
+        assertEquals(SaleStatus.ACTIVE, sale.getStatus());
     }
 }
