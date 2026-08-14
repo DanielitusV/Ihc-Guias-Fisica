@@ -2,6 +2,7 @@ package com.litus.guias;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 
@@ -36,6 +37,20 @@ public class AccountTest {
         assertEquals(
                 new BigDecimal("70.00"),
                 account.getBalance()
+        );
+    }
+
+    @Test
+    public void expenseAmountMustBePositive() {
+        Account account = new Account(
+                1,
+                "Efectivo",
+                new BigDecimal("100.00")
+        );
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> account.addExpense(new BigDecimal("-20.00"))
         );
     }
 }

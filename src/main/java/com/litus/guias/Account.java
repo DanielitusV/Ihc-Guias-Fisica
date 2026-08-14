@@ -19,7 +19,11 @@ public class Account {
     }
 
     public void addExpense(BigDecimal amount) {
-        this.balance = balance.subtract(amount);
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+
+        balance = balance.subtract(amount);
     }
 
     public BigDecimal getBalance() {
