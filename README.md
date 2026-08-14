@@ -1,44 +1,42 @@
-# IHC - Guías Académicas Física
+# Guías Física
 
-Proyecto final de la materia **Interacción Humano-Computadora (IHC)**.
+Aplicación de escritorio para gestionar la venta y distribución de guías académicas
+del Centro de Estudiantes de la Carrera de Física de la Universidad Mayor de San Simón.
 
-## Tema
+## Objetivo
 
-Diseño de una interfaz administrativa para el control de distribución presencial de guías académicas en la Carrera de Física.
+Reemplazar el sistema actual que el **Centro** posee basado en hojas de cálculo para
+facilitar el control de:
 
-## Prototipo
+- Venta de guías.
+- Inventario.
+- Pedidos y llegada de nuevas guías.
+- Deudas con el proveedor.
+- Movimientos de dinero.
+- Cierres de caja.
 
-El prototipo React vive en la raíz del repositorio. Ejecutar los siguientes comandos para que la aplicación sea inicializado:
+## Plataforma
 
-```bash
-bun install
-bun run dev
-```
+Inicialemente -> Aplicación de escritorio para Windows.
 
-## Aviso
+## Tecnologías
 
-Antes de subir cualquier código ejecutar los siguientes comandos:
-```bash
-bun run build
-bun run lint
-```
+- Java 21
+- Maven
+
+### Tecnologías previstas
+
+- JavaFX
+- SQLite
+- JUnit 5
+
+## Estado
+
+En desarrollo.
 
 ***
 
-Servidor local:
+## Versión anterior
 
-`http://127.0.0.1:5317`
-
-Rutas principales:
-
-- `/` Dashboard
-- `/venta` Registrar venta
-- `/inventario` Inventario
-- `/cuentas` Cuentas
-- `/cierre` Cierre de caja
-- `/pedidos` Pedidos
-- `/consulta` Consulta estudiante
-
-## Documentación
-
-Los informes, PDFs e imágenes del trabajo están en `docs/`.
+La versión web desarrollada originalmente para la materia de Interacción Humano-
+Computadora se conserva en la rama `legacy-web`.
