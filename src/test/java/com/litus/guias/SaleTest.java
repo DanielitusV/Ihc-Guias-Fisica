@@ -12,12 +12,18 @@ public class SaleTest {
         Sale sale = new Sale(
                 1,
                 10,
-                new BigDecimal("25.00")
+                new BigDecimal("25.00"),
+                PaymentMethod.QR
         );
 
         assertEquals(
                 new BigDecimal("25.00"),
                 sale.getPrice()
+        );
+
+        assertEquals(
+                PaymentMethod.QR,
+                sale.getPaymentMethod()
         );
     }
 }
