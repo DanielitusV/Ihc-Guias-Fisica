@@ -1,10 +1,10 @@
 package com.litus.guias;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GuideTest {
 
@@ -33,5 +33,20 @@ public class GuideTest {
         guide.sellOne();
 
         assertEquals(4, guide.getStock());
+    }
+
+    @Test
+    public void sellingWithZeroStockIsNotAllowed() {
+        Guide guide = new Guide(
+                1,
+                "Física I",
+                new BigDecimal("25.00"),
+                0
+        );
+
+        assertThrows(
+                IllegalStateException.class,
+                guide::sellOne
+        );
     }
 }

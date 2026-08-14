@@ -20,6 +20,10 @@ public class Guide {
     }
 
     public void sellOne() {
+        if (stock <= 0) {
+            throw new IllegalStateException("There is no stock available");
+        }
+
         this.stock--;
     }
 
