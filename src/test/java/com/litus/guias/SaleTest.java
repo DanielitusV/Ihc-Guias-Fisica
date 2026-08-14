@@ -38,4 +38,24 @@ public class SaleTest {
 
         assertEquals(SaleStatus.ACTIVE, sale.getStatus());
     }
+
+    @Test
+    public void cancellingSaleChangesStatusAndStoresReason() {
+        Sale sale = new Sale(
+                1,
+                10,
+                new BigDecimal("25.00"),
+                PaymentMethod.QR,
+                date,
+                SaleStatus.ACTIVE
+        );
+
+        sale.cancel("Venta registrada por error");
+
+        assertEquals(SaleStatus.CANCELLED, sale.getStatus());
+        assertEquals(
+                "Venta registrada por error",
+                sale.getCancellationReason()
+        );
+    }
 }

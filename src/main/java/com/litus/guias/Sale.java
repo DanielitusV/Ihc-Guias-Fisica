@@ -11,6 +11,7 @@ public class Sale {
     private PaymentMethod paymentMethod;
     private LocalDateTime createdAt;
     private SaleStatus status;
+    private String cancellationReason;
 
     public Sale(long id, long guideId, BigDecimal price,
                 PaymentMethod paymentMethod, LocalDateTime createdAt,
@@ -21,6 +22,11 @@ public class Sale {
         this.paymentMethod = paymentMethod;
         this.createdAt = createdAt;
         this.status = status;
+    }
+
+    public void cancel(String reason) {
+        this.status = SaleStatus.CANCELLED;
+        this.cancellationReason = reason;
     }
 
     public BigDecimal getPrice() {
@@ -37,5 +43,9 @@ public class Sale {
 
     public SaleStatus getStatus() {
         return this.status;
+    }
+
+    public String getCancellationReason() {
+        return this.cancellationReason;
     }
 }
