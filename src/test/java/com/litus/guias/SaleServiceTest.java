@@ -26,7 +26,7 @@ public class SaleServiceTest {
 
         SaleService saleService = new SaleService();
 
-        Sale sale = saleService.registerSale(
+        SaleResult result = saleService.registerSale(
                 guide,
                 cashAccount,
                 PaymentMethod.CASH,
@@ -39,9 +39,29 @@ public class SaleServiceTest {
                 cashAccount.getBalance()
         );
 
-        assertEquals(new BigDecimal("25.00"), sale.getPrice());
-        assertEquals(PaymentMethod.CASH, sale.getPaymentMethod());
-        assertEquals(SaleStatus.ACTIVE, sale.getStatus());
+        assertEquals(new BigDecimal("25.00"), result.getSale().getPrice());
+        assertEquals(PaymentMethod.CASH, result.getSale().getPaymentMethod());
+        assertEquals(SaleStatus.ACTIVE, result.getSale().getStatus());
+
+        assertEquals(
+                AccountMovementType.INCOME,
+                result.getMovement().getType()
+        );
+
+        assertEquals(
+                AccountMovementConcept.SALE,
+                result.getMovement().getConcept()
+        );
+
+        assertEquals(
+                new BigDecimal("25.00"),
+                result.getMovement().getAmount()
+        );
+
+        assertEquals(
+                1,
+                result.getMovement().getAccountId()
+        );
     }
 
     @Test

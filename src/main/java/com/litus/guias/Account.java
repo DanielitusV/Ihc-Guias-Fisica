@@ -28,9 +28,14 @@ public class Account {
         return this.balance;
     }
 
+    public long getId() {
+        return this.id;
+    }
+
     private void validatePositiveAmount(BigDecimal amount) {
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be greater than zero");
         }
     }
+
 }

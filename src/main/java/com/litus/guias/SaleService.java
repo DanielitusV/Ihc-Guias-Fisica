@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public class SaleService {
 
-    public Sale registerSale(
+    public SaleResult registerSale(
         Guide guide,
         Account account,
         PaymentMethod paymentMethod,
@@ -13,7 +13,7 @@ public class SaleService {
         guide.sellOne();
         account.addIncome(guide.getCurrentPrice());
 
-        return new Sale(
+        Sale sale = new Sale(
                 0,
                 guide.getId(),
                 guide.getCurrentPrice(),
@@ -21,5 +21,17 @@ public class SaleService {
                 createdAt,
                 SaleStatus.ACTIVE
         );
+
+        AccountMovement movement = new AccountMovement(
+                0,
+                account.getId(),
+                AccountMovementType.INCOME,
+                AccountMovementConcept.SALE,
+                guide.getCurrentPrice(),
+                null,
+                createdAt
+        );
+
+        return new SaleResult(sale, movement);
     }
 }

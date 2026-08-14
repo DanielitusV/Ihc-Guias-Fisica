@@ -58,4 +58,12 @@ public class AccountMovement {
     public LocalDateTime getCreatedAt() {
         return this.createdAt;
     }
+
+    public AccountMovementType getType() {
+        return this.type;
+    }
+
+    public long getAccountId() {
+        return this.accountId;
+    }
 }
