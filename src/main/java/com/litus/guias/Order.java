@@ -42,4 +42,8 @@ public class Order {
     public List<OrderItem> getItems() {
         return items;
     }
+
+    public OrderPaymentCondition getPaymentCondition() {
+        return paymentCondition;
+    }
 }
