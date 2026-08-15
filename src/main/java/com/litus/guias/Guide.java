@@ -27,6 +27,10 @@ public class Guide {
         this.stock--;
     }
 
+    public void addOne() {
+        stock++;
+    }
+
     public int getStock() {
         return stock;
     }

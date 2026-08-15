@@ -25,7 +25,11 @@ public class Sale {
     }
 
     public void cancel(String reason) {
-        if(reason == null || reason.isBlank()) {
+        if (status == SaleStatus.CANCELLED) {
+            throw new IllegalStateException("Sale is already cancelled");
+        }
+
+        if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("Cancellation reason is required");
         }
 

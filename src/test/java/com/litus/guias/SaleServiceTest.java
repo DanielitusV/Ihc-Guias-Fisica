@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class SaleServiceTest {
@@ -95,5 +96,104 @@ public class SaleServiceTest {
                 new BigDecimal("100.00"),
                 cashAccount.getBalance()
         );
+    }
+
+    @Test
+    void cancellingSaleRestoresStockAndMoney() {
+        Guide guide = new Guide(
+                1,
+                "Física I",
+                new BigDecimal("25.00"),
+                5
+        );
+
+        Account cashAccount = new Account(
+                1,
+                "Efectivo",
+                new BigDecimal("100.00")
+        );
+
+        SaleService service = new SaleService();
+
+        SaleResult saleResult = service.registerSale(
+                guide,
+                cashAccount,
+                PaymentMethod.CASH,
+                LocalDateTime.of(2026, 8, 14, 19, 30)
+        );
+
+        AccountMovement cancellationMovement = service.cancelSale(
+                saleResult.getSale(),
+                guide,
+                cashAccount,
+                "Venta duplicada",
+                LocalDateTime.of(2026, 8, 14, 19, 30)
+        );
+
+        assertEquals(SaleStatus.CANCELLED, saleResult.getSale().getStatus());
+        assertEquals(5, guide.getStock());
+        assertEquals(new BigDecimal("100.00"), cashAccount.getBalance());
+
+        assertEquals(
+                AccountMovementType.EXPENSE,
+                cancellationMovement.getType()
+        );
+
+        assertEquals(
+                AccountMovementConcept.SALE_CANCELLATION,
+                cancellationMovement.getConcept()
+        );
+
+        assertEquals(
+                new BigDecimal("25.00"),
+                cancellationMovement.getAmount()
+        );
+    }
+
+    @Test
+    public void saleCannotBeCancelledTwice() {
+        Guide guide = new Guide(
+                1,
+                "Física I",
+                new BigDecimal("25.00"),
+                5
+        );
+
+        Account cashAccount = new Account(
+                1,
+                "Efectivo",
+                new BigDecimal("100.00")
+        );
+
+        SaleService service = new SaleService();
+
+        SaleResult result = service.registerSale(
+                guide,
+                cashAccount,
+                PaymentMethod.CASH,
+                LocalDateTime.of(2026, 8, 14, 19, 30)
+        );
+
+        service.cancelSale(
+                result.getSale(),
+                guide,
+                cashAccount,
+                "Venta duplicada",
+                LocalDateTime.of(2026, 8, 14, 19, 35)
+        );
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.cancelSale(
+                        result.getSale(),
+                        guide,
+                        cashAccount,
+                        "Otra vez",
+                        LocalDateTime.of(2026, 8, 14, 19, 40)
+                )
+        );
+
+        assertEquals(5, guide.getStock());
+        assertEquals(new BigDecimal("100.00"), cashAccount.getBalance());
     }
 }

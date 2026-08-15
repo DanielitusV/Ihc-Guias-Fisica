@@ -34,4 +34,27 @@ public class SaleService {
 
         return new SaleResult(sale, movement);
     }
+
+    public AccountMovement cancelSale(
+            Sale sale,
+            Guide guide,
+            Account account,
+            String reason,
+            LocalDateTime createdAt
+    ) {
+        sale.cancel(reason);
+
+        guide.addOne();
+        account.addExpense(sale.getPrice());
+
+        return new AccountMovement(
+                0,
+                account.getId(),
+                AccountMovementType.EXPENSE,
+                AccountMovementConcept.SALE_CANCELLATION,
+                sale.getPrice(),
+                reason,
+                createdAt
+        );
+    }
 }
