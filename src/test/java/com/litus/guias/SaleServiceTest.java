@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class SaleServiceTest {
 
@@ -195,5 +196,104 @@ public class SaleServiceTest {
 
         assertEquals(5, guide.getStock());
         assertEquals(new BigDecimal("100.00"), cashAccount.getBalance());
+    }
+
+    @Test
+    public void saleCannotBeRegisteredAfterValidClosureOnSameDay() {
+        Guide guide = new Guide(
+                1,
+                "Física I",
+                new BigDecimal("25.00"),
+                5
+        );
+
+        Account cashAccount = new Account(
+                1,
+                "Efectivo",
+                new BigDecimal("100.00")
+        );
+
+        CashClosure closure = new CashClosure(
+                1,
+                new BigDecimal("100.00"),
+                new BigDecimal("100.00"),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                "Cierre del día",
+                LocalDateTime.of(2026, 8, 15, 15, 30)
+        );
+
+        SaleService service = new SaleService();
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> service.registerSale(
+                        guide,
+                        cashAccount,
+                        PaymentMethod.CASH,
+                        LocalDateTime.of(2026, 8, 15, 17, 0),
+                        List.of(closure)
+                )
+        );
+
+        assertEquals(5, guide.getStock());
+        assertEquals(new BigDecimal("100.00"), cashAccount.getBalance());
+    }
+
+    @Test
+    public void saleCanBeRegisteredAfterClosureIsCancelled() {
+        Guide guide = new Guide(
+                1,
+                "Física I",
+                new BigDecimal("25.00"),
+                5
+        );
+
+        Account cashAccount = new Account(
+                1,
+                "Efectivo",
+                new BigDecimal("100.00")
+        );
+
+        CashClosure closure = new CashClosure(
+                1,
+                new BigDecimal("100.00"),
+                new BigDecimal("100.00"),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                "Cierre prematuro",
+                LocalDateTime.of(2026, 8, 15, 15, 0)
+        );
+
+        closure.cancel(
+                "Se continuó atendiendo después del cierre"
+        );
+
+        SaleService service = new SaleService();
+
+        SaleResult result = service.registerSale(
+               guide,
+               cashAccount,
+               PaymentMethod.CASH,
+               LocalDateTime.of(2026, 8, 15, 17, 0),
+               List.of(closure)
+        );
+
+        assertEquals(4, guide.getStock());
+
+        assertEquals(
+                new BigDecimal("125.00"),
+                cashAccount.getBalance()
+        );
+
+        assertEquals(
+                SaleStatus.ACTIVE,
+                result.getSale().getStatus()
+        );
+
+        assertEquals(
+                new BigDecimal("25.00"),
+                result.getMovement().getAmount()
+        );
     }
 }

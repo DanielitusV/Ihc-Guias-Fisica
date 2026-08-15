@@ -1,6 +1,7 @@
 package com.litus.guias;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class SaleService {
 
@@ -54,6 +55,40 @@ public class SaleService {
                 AccountMovementConcept.SALE_CANCELLATION,
                 sale.getPrice(),
                 reason,
+                createdAt
+        );
+    }
+
+    public SaleResult registerSale(
+            Guide guide,
+            Account account,
+            PaymentMethod paymentMethod,
+            LocalDateTime createdAt,
+            List<CashClosure> closures
+    ) {
+        for (CashClosure closure : closures) {
+            boolean sameDay =
+                    closure.getCreatedAt()
+                            .toLocalDate()
+                            .equals(createdAt.toLocalDate());
+
+            boolean valid =
+                    closure.getStatus() == CashClosureStatus.VALID;
+
+            boolean afterOrAtClosure =
+                    !createdAt.isBefore(closure.getCreatedAt());
+
+            if (sameDay && valid && afterOrAtClosure) {
+                throw new IllegalStateException(
+                        "Cannot register a sale after a valid cash closure"
+                );
+            }
+        }
+
+        return registerSale(
+                guide,
+                account,
+                paymentMethod,
                 createdAt
         );
     }

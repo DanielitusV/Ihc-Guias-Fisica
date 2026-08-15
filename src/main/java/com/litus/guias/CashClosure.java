@@ -80,6 +80,10 @@ public class CashClosure {
         return countedCash.subtract(expectedCash);
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
     public BigDecimal getQrDifference() {
         return reportedQr.subtract(expectedQr);
     }
@@ -87,4 +91,5 @@ public class CashClosure {
     public CashClosureStatus getStatus() {
         return status;
     }
+
 }
