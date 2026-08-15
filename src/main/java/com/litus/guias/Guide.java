@@ -31,6 +31,10 @@ public class Guide {
         stock++;
     }
 
+    public void addStock(int quantity) {
+        stock += quantity;
+    }
+
     public int getStock() {
         return stock;
     }
