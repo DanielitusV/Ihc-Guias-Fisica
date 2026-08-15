@@ -18,7 +18,7 @@ public class DayStatusCalculatorTest {
                 LocalDate.of(2026, 8, 14),
                 true,
                 List.of(),
-                LocalDate.of(2026,8 , 15)
+                LocalDate.of(2026, 8, 15)
         );
 
         assertEquals(
@@ -81,6 +81,23 @@ public class DayStatusCalculatorTest {
 
         assertEquals(
                 DayStatus.MISSED,
+                status
+        );
+    }
+
+    @Test
+    public void pastDayWithoutActivityIsNoActivity() {
+        DayStatusCalculator calculator = new DayStatusCalculator();
+
+        DayStatus status = calculator.calculate(
+                LocalDate.of(2026, 8, 9),
+                false,
+                List.of(),
+                LocalDate.of(2026, 8, 10)
+        );
+
+        assertEquals(
+                DayStatus.NO_ACTIVITY,
                 status
         );
     }

@@ -30,6 +30,10 @@ public class DayStatusCalculator {
             return DayStatus.MISSED;
         }
 
+        if (day.isBefore(today) && !hasActivity) {
+            return DayStatus.NO_ACTIVITY;
+        }
+
         return DayStatus.OPEN;
     }
 }
