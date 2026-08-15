@@ -35,6 +35,10 @@ public class Guide {
         stock += quantity;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public int getStock() {
         return stock;
     }
