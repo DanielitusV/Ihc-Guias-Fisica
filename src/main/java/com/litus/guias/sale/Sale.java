@@ -49,6 +49,14 @@ public class Sale {
         return this.createdAt;
     }
 
+    public long getId() {
+        return this.id;
+    }
+
+    public long getGuideId() {
+        return this.guideId;
+    }
+
     public SaleStatus getStatus() {
         return this.status;
     }
