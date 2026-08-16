@@ -1,9 +1,12 @@
 package com.litus.guias.persistence;
 
 import com.litus.guias.account.Account;
+
+import java.sql.Connection;
 import java.sql.Statement;
 
 public class AccountRepository {
+
     private final Database database;
 
     public AccountRepository(Database database) {
@@ -11,15 +14,22 @@ public class AccountRepository {
     }
 
     public long save(Account account) throws Exception {
+        try (Connection connection = database.getConnection()) {
+            return save(connection, account);
+        }
+    }
+
+    public long save(Connection connection, Account account) throws Exception {
         String sql = """
-                    INSERT INTO accounts (name, balance)
-                    VALUES (?, ?)
+                INSERT INTO accounts (name, balance)
+                VALUES (?, ?)
                 """;
-        try (var connection = database.getConnection();
-            var statement = connection.prepareStatement(
-                    sql,
-                    Statement.RETURN_GENERATED_KEYS
+
+        try (var statement = connection.prepareStatement(
+                sql,
+                Statement.RETURN_GENERATED_KEYS
         )) {
+
             statement.setString(1, account.getName());
             statement.setBigDecimal(2, account.getBalance());
 
@@ -36,14 +46,20 @@ public class AccountRepository {
     }
 
     public Account findById(long id) throws Exception {
+        try (Connection connection = database.getConnection()) {
+            return findById(connection, id);
+        }
+    }
+
+    public Account findById(Connection connection, long id) throws Exception {
         String sql = """
                 SELECT id, name, balance
                 FROM accounts
                 WHERE id = ?
                 """;
 
-        try (var connection = database.getConnection();
-            var statement = connection.prepareStatement(sql)) {
+        try (var statement = connection.prepareStatement(sql)) {
+
             statement.setLong(1, id);
 
             try (var result = statement.executeQuery()) {
@@ -61,18 +77,24 @@ public class AccountRepository {
     }
 
     public void update(Account account) throws Exception {
+        try (Connection connection = database.getConnection()) {
+            update(connection, account);
+        }
+    }
+
+    public void update(Connection connection, Account account) throws Exception {
         String sql = """
                 UPDATE accounts
                 SET name = ?, balance = ?
                 WHERE id = ?
                 """;
 
-        try (var connection = database.getConnection();
-             var statement = connection.prepareStatement(sql)) {
+        try (var statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, account.getName());
             statement.setBigDecimal(2, account.getBalance());
             statement.setLong(3, account.getId());
+
             statement.executeUpdate();
         }
     }

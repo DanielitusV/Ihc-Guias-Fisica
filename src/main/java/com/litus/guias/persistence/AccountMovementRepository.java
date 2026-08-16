@@ -2,6 +2,7 @@ package com.litus.guias.persistence;
 
 import com.litus.guias.account.*;
 
+import java.sql.Connection;
 import java.sql.Statement;
 import java.time.LocalDateTime;
 
@@ -14,17 +15,26 @@ public class AccountMovementRepository {
     }
 
     public long save(AccountMovement movement) throws Exception {
+        try (Connection connection = database.getConnection()) {
+            return save(connection, movement);
+        }
+    }
+
+    public long save(
+            Connection connection,
+            AccountMovement movement
+    ) throws Exception {
+
         String sql = """
                 INSERT INTO account_movements
                 (account_id, type, concept, amount, reason, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """;
 
-        try (var connection = database.getConnection();
-             var statement = connection.prepareStatement(
-                     sql,
-                     Statement.RETURN_GENERATED_KEYS
-             )) {
+        try (var statement = connection.prepareStatement(
+                sql,
+                Statement.RETURN_GENERATED_KEYS
+        )) {
 
             statement.setLong(1, movement.getAccountId());
             statement.setString(2, movement.getType().name());
@@ -48,6 +58,16 @@ public class AccountMovementRepository {
     }
 
     public AccountMovement findById(long id) throws Exception {
+        try (Connection connection = database.getConnection()) {
+            return findById(connection, id);
+        }
+    }
+
+    public AccountMovement findById(
+            Connection connection,
+            long id
+    ) throws Exception {
+
         String sql = """
                 SELECT id, account_id, type, concept,
                        amount, reason, created_at
@@ -55,8 +75,7 @@ public class AccountMovementRepository {
                 WHERE id = ?
                 """;
 
-        try (var connection = database.getConnection();
-             var statement = connection.prepareStatement(sql)) {
+        try (var statement = connection.prepareStatement(sql)) {
 
             statement.setLong(1, id);
 

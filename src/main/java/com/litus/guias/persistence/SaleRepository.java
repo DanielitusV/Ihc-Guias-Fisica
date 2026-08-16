@@ -1,9 +1,15 @@
 package com.litus.guias.persistence;
 
-import com.litus.guias.sale.*;
+import com.litus.guias.sale.PaymentMethod;
+import com.litus.guias.sale.Sale;
+import com.litus.guias.sale.SaleStatus;
+
+import java.sql.Connection;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 
 public class SaleRepository {
+
     private final Database database;
 
     public SaleRepository(Database database) {
@@ -11,16 +17,23 @@ public class SaleRepository {
     }
 
     public long save(Sale sale) throws Exception {
+        try (Connection connection = database.getConnection()) {
+            return save(connection, sale);
+        }
+    }
+
+    public long save(Connection connection, Sale sale) throws Exception {
         String sql = """
-                INSERT INTO sales (guide_id, price, payment_method, status, cancellation_reason, created_at)
+                INSERT INTO sales
+                (guide_id, price, payment_method, status,
+                 cancellation_reason, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """;
 
-        try (var connection = database.getConnection();
-             var statement = connection.prepareStatement(
-                     sql,
-                     Statement.RETURN_GENERATED_KEYS
-             )) {
+        try (var statement = connection.prepareStatement(
+                sql,
+                Statement.RETURN_GENERATED_KEYS
+        )) {
 
             statement.setLong(1, sale.getGuideId());
             statement.setBigDecimal(2, sale.getPrice());
@@ -37,18 +50,25 @@ public class SaleRepository {
                 }
             }
         }
+
         throw new IllegalStateException("Could not generate sale ID");
     }
 
     public Sale findById(long id) throws Exception {
+        try (Connection connection = database.getConnection()) {
+            return findById(connection, id);
+        }
+    }
+
+    public Sale findById(Connection connection, long id) throws Exception {
         String sql = """
-                SELECT id, guide_id, price, payment_method, status, cancellation_reason, created_at
+                SELECT id, guide_id, price, payment_method,
+                       status, cancellation_reason, created_at
                 FROM sales
                 WHERE id = ?
                 """;
 
-        try (var connection = database.getConnection();
-             var statement = connection.prepareStatement(sql)) {
+        try (var statement = connection.prepareStatement(sql)) {
 
             statement.setLong(1, id);
 
@@ -62,28 +82,35 @@ public class SaleRepository {
                         result.getLong("guide_id"),
                         result.getBigDecimal("price"),
                         PaymentMethod.valueOf(result.getString("payment_method")),
-                        java.time.LocalDateTime.parse(result.getString("created_at")),
+                        LocalDateTime.parse(result.getString("created_at")),
                         SaleStatus.ACTIVE
                 );
 
                 if (SaleStatus.valueOf(result.getString("status"))
                         == SaleStatus.CANCELLED) {
+
                     sale.cancel(result.getString("cancellation_reason"));
                 }
+
                 return sale;
             }
         }
     }
 
     public void update(Sale sale) throws Exception {
+        try (Connection connection = database.getConnection()) {
+            update(connection, sale);
+        }
+    }
+
+    public void update(Connection connection, Sale sale) throws Exception {
         String sql = """
                 UPDATE sales
                 SET status = ?, cancellation_reason = ?
                 WHERE id = ?
                 """;
 
-        try (var connection = database.getConnection();
-            var statement = connection.prepareStatement(sql)) {
+        try (var statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, sale.getStatus().name());
             statement.setString(2, sale.getCancellationReason());
@@ -93,4 +120,3 @@ public class SaleRepository {
         }
     }
 }
-
