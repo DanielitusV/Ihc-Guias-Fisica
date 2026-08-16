@@ -36,6 +36,18 @@ public class OrderItem {
         return this.guideId;
     }
 
+    public long getId() {
+        return this.id;
+    }
+
+    public long getOrderId() {
+        return this.orderId;
+    }
+
+    public BigDecimal getUnitCost() {
+        return this.unitCost;
+    }
+
     public int getQuantity() {
         return this.quantity;
     }

@@ -43,6 +43,14 @@ public class Order {
         return items;
     }
 
+    public long getId() {
+        return id;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
     public OrderPaymentCondition getPaymentCondition() {
         return paymentCondition;
     }
