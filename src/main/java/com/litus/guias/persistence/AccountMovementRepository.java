@@ -1,10 +1,14 @@
 package com.litus.guias.persistence;
 
-import com.litus.guias.account.*;
+import com.litus.guias.account.AccountMovement;
+import com.litus.guias.account.AccountMovementConcept;
+import com.litus.guias.account.AccountMovementType;
 
 import java.sql.Connection;
 import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AccountMovementRepository {
 
@@ -14,8 +18,13 @@ public class AccountMovementRepository {
         this.database = database;
     }
 
-    public long save(AccountMovement movement) throws Exception {
-        try (Connection connection = database.getConnection()) {
+    public long save(
+            AccountMovement movement
+    ) throws Exception {
+
+        try (Connection connection =
+                     database.getConnection()) {
+
             return save(connection, movement);
         }
     }
@@ -27,7 +36,14 @@ public class AccountMovementRepository {
 
         String sql = """
                 INSERT INTO account_movements
-                (account_id, type, concept, amount, reason, created_at)
+                (
+                    account_id,
+                    type,
+                    concept,
+                    amount,
+                    reason,
+                    created_at
+                )
                 VALUES (?, ?, ?, ?, ?, ?)
                 """;
 
@@ -36,16 +52,41 @@ public class AccountMovementRepository {
                 Statement.RETURN_GENERATED_KEYS
         )) {
 
-            statement.setLong(1, movement.getAccountId());
-            statement.setString(2, movement.getType().name());
-            statement.setString(3, movement.getConcept().name());
-            statement.setBigDecimal(4, movement.getAmount());
-            statement.setString(5, movement.getReason());
-            statement.setString(6, movement.getCreatedAt().toString());
+            statement.setLong(
+                    1,
+                    movement.getAccountId()
+            );
+
+            statement.setString(
+                    2,
+                    movement.getType().name()
+            );
+
+            statement.setString(
+                    3,
+                    movement.getConcept().name()
+            );
+
+            statement.setBigDecimal(
+                    4,
+                    movement.getAmount()
+            );
+
+            statement.setString(
+                    5,
+                    movement.getReason()
+            );
+
+            statement.setString(
+                    6,
+                    movement.getCreatedAt().toString()
+            );
 
             statement.executeUpdate();
 
-            try (var keys = statement.getGeneratedKeys()) {
+            try (var keys =
+                         statement.getGeneratedKeys()) {
+
                 if (keys.next()) {
                     return keys.getLong(1);
                 }
@@ -57,8 +98,13 @@ public class AccountMovementRepository {
         );
     }
 
-    public AccountMovement findById(long id) throws Exception {
-        try (Connection connection = database.getConnection()) {
+    public AccountMovement findById(
+            long id
+    ) throws Exception {
+
+        try (Connection connection =
+                     database.getConnection()) {
+
             return findById(connection, id);
         }
     }
@@ -69,37 +115,180 @@ public class AccountMovementRepository {
     ) throws Exception {
 
         String sql = """
-                SELECT id, account_id, type, concept,
-                       amount, reason, created_at
+                SELECT
+                    id,
+                    account_id,
+                    type,
+                    concept,
+                    amount,
+                    reason,
+                    created_at
                 FROM account_movements
                 WHERE id = ?
                 """;
 
-        try (var statement = connection.prepareStatement(sql)) {
+        try (var statement =
+                     connection.prepareStatement(sql)) {
 
             statement.setLong(1, id);
 
-            try (var result = statement.executeQuery()) {
+            try (var result =
+                         statement.executeQuery()) {
+
                 if (!result.next()) {
                     return null;
                 }
 
-                return new AccountMovement(
-                        result.getLong("id"),
-                        result.getLong("account_id"),
-                        AccountMovementType.valueOf(
-                                result.getString("type")
-                        ),
-                        AccountMovementConcept.valueOf(
-                                result.getString("concept")
-                        ),
-                        result.getBigDecimal("amount"),
-                        result.getString("reason"),
-                        LocalDateTime.parse(
-                                result.getString("created_at")
-                        )
+                return mapMovement(result);
+            }
+        }
+    }
+
+    public List<AccountMovement> findSupplierPayments()
+            throws Exception {
+
+        try (Connection connection =
+                     database.getConnection()) {
+
+            return findSupplierPayments(connection);
+        }
+    }
+
+    public List<AccountMovement> findSupplierPayments(
+            Connection connection
+    ) throws Exception {
+
+        String sql = """
+                SELECT
+                    id,
+                    account_id,
+                    type,
+                    concept,
+                    amount,
+                    reason,
+                    created_at
+                FROM account_movements
+                WHERE concept = 'SUPPLIER_PAYMENT'
+                ORDER BY created_at ASC
+                """;
+
+        List<AccountMovement> movements =
+                new ArrayList<>();
+
+        try (var statement =
+                     connection.prepareStatement(sql);
+             var result =
+                     statement.executeQuery()) {
+
+            while (result.next()) {
+                movements.add(
+                        mapMovement(result)
                 );
             }
         }
+
+        return movements;
+    }
+
+    public List<AccountMovement> findAll() throws Exception {
+        try (Connection connection = database.getConnection()) {
+            return query(connection, null, null, null, null);
+        }
+    }
+
+    public List<AccountMovement> findByConcept(
+            AccountMovementConcept concept
+    ) throws Exception {
+        try (Connection connection = database.getConnection()) {
+            return query(connection, null, concept, null, null);
+        }
+    }
+
+    public List<AccountMovement> findByAccountId(long accountId)
+            throws Exception {
+        try (Connection connection = database.getConnection()) {
+            return query(connection, accountId, null, null, null);
+        }
+    }
+
+    public List<AccountMovement> findBetween(
+            LocalDateTime startInclusive,
+            LocalDateTime endExclusive
+    ) throws Exception {
+        try (Connection connection = database.getConnection()) {
+            return query(
+                    connection,
+                    null,
+                    null,
+                    startInclusive,
+                    endExclusive
+            );
+        }
+    }
+
+    private List<AccountMovement> query(
+            Connection connection,
+            Long accountId,
+            AccountMovementConcept concept,
+            LocalDateTime startInclusive,
+            LocalDateTime endExclusive
+    ) throws Exception {
+        StringBuilder sql = new StringBuilder("""
+                SELECT id, account_id, type, concept, amount, reason, created_at
+                FROM account_movements
+                WHERE 1 = 1
+                """);
+        if (concept != null) {
+            sql.append(" AND concept = ?");
+        }
+        if (accountId != null) {
+            sql.append(" AND account_id = ?");
+        }
+        if (startInclusive != null) {
+            sql.append(" AND created_at >= ? AND created_at < ?");
+        }
+        sql.append(" ORDER BY created_at ASC, id ASC");
+
+        List<AccountMovement> movements = new ArrayList<>();
+        try (var statement = connection.prepareStatement(sql.toString())) {
+            int parameter = 1;
+            if (concept != null) {
+                statement.setString(parameter++, concept.name());
+            }
+            if (accountId != null) {
+                statement.setLong(parameter++, accountId);
+            }
+            if (startInclusive != null) {
+                statement.setString(parameter++, startInclusive.toString());
+                statement.setString(parameter, endExclusive.toString());
+            }
+            try (var result = statement.executeQuery()) {
+                while (result.next()) {
+                    movements.add(mapMovement(result));
+                }
+            }
+        }
+        return movements;
+    }
+
+    private AccountMovement mapMovement(
+            java.sql.ResultSet result
+    ) throws Exception {
+
+        return new AccountMovement(
+                result.getLong("id"),
+                result.getLong("account_id"),
+                AccountMovementType.valueOf(
+                        result.getString("type")
+                ),
+                AccountMovementConcept.valueOf(
+                        result.getString("concept")
+                ),
+                result.getBigDecimal("amount"),
+                result.getString("reason"),
+                LocalDateTime.parse(
+                        result.getString("created_at")
+                )
+        );
     }
 }

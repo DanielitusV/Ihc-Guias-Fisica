@@ -4,6 +4,8 @@ import com.litus.guias.inventory.Guide;
 
 import java.sql.Connection;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GuideRepository {
 
@@ -100,5 +102,32 @@ public class GuideRepository {
 
             statement.executeUpdate();
         }
+    }
+
+    public List<Guide> findAll() throws Exception {
+        try (Connection connection = database.getConnection()) {
+            return findAll(connection);
+        }
+    }
+
+    public List<Guide> findAll(Connection connection) throws Exception {
+        String sql = """
+                SELECT id, name, current_price, stock
+                FROM guides
+                ORDER BY id ASC
+                """;
+        List<Guide> guides = new ArrayList<>();
+        try (var statement = connection.prepareStatement(sql);
+             var result = statement.executeQuery()) {
+            while (result.next()) {
+                guides.add(new Guide(
+                        result.getLong("id"),
+                        result.getString("name"),
+                        result.getBigDecimal("current_price"),
+                        result.getInt("stock")
+                ));
+            }
+        }
+        return guides;
     }
 }

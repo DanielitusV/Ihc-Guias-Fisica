@@ -94,4 +94,27 @@ public class CashClosure {
         return status;
     }
 
+    public long getId() {
+        return id;
+    }
+
+    public BigDecimal getExpectedCash() {
+        return expectedCash;
+    }
+
+    public BigDecimal getCountedCash() {
+        return countedCash;
+    }
+
+    public BigDecimal getExpectedQr() {
+        return expectedQr;
+    }
+
+    public BigDecimal getReportedQr() {
+        return reportedQr;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
 }

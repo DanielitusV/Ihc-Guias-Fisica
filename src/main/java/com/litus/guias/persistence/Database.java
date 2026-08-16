@@ -37,12 +37,45 @@ public class Database {
 
             try (Connection connection = getConnection();
                  var statement = connection.createStatement()) {
-
-                for (String command : sql.split(";")) {
-                    if (!command.isBlank()) {
-                        statement.execute(command);
+                connection.setAutoCommit(false);
+                try {
+                    for (String command : sql.split(";")) {
+                        if (!command.isBlank()) {
+                            statement.execute(command);
+                        }
                     }
+                    ensureSaleAccountColumn(connection);
+                    statement.execute("""
+                            CREATE INDEX IF NOT EXISTS idx_sales_account_id
+                            ON sales(account_id)
+                            """);
+                    connection.commit();
+                } catch (Exception exception) {
+                    connection.rollback();
+                    throw exception;
                 }
+            }
+        }
+    }
+
+    private void ensureSaleAccountColumn(Connection connection)
+            throws Exception {
+        boolean found = false;
+        try (var statement = connection.createStatement();
+             var result = statement.executeQuery("PRAGMA table_info(sales)")) {
+            while (result.next()) {
+                if ("account_id".equals(result.getString("name"))) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found) {
+            try (var statement = connection.createStatement()) {
+                statement.execute("""
+                        ALTER TABLE sales
+                        ADD COLUMN account_id INTEGER REFERENCES accounts(id)
+                        """);
             }
         }
     }

@@ -25,6 +25,7 @@ public class SaleService {
         Sale sale = new Sale(
                 0,
                 guide.getId(),
+                account.getId(),
                 guide.getCurrentPrice(),
                 paymentMethod,
                 createdAt,

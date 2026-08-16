@@ -14,13 +14,15 @@ CREATE TABLE IF NOT EXISTS accounts (
 CREATE TABLE IF NOT EXISTS sales (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     guide_id INTEGER NOT NULL,
+    account_id INTEGER NOT NULL,
     price NUMERIC NOT NULL CHECK (price > 0),
     payment_method TEXT NOT NULL CHECK (payment_method IN ('CASH', 'QR')),
     status TEXT NOT NULL CHECK (status IN ('ACTIVE', 'CANCELLED')),
     cancellation_reason TEXT,
     created_at TEXT NOT NULL,
 
-    FOREIGN KEY (guide_id) REFERENCES guides(id)
+    FOREIGN KEY (guide_id) REFERENCES guides(id),
+    FOREIGN KEY (account_id) REFERENCES accounts(id)
 );
 
 CREATE TABLE IF NOT EXISTS account_movements (

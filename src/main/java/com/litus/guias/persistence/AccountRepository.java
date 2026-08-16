@@ -4,6 +4,8 @@ import com.litus.guias.account.Account;
 
 import java.sql.Connection;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AccountRepository {
 
@@ -97,5 +99,50 @@ public class AccountRepository {
 
             statement.executeUpdate();
         }
+    }
+
+    public Account findByName(String name) throws Exception {
+        try (Connection connection = database.getConnection()) {
+            String sql = """
+                    SELECT id, name, balance
+                    FROM accounts
+                    WHERE name = ?
+                    """;
+            try (var statement = connection.prepareStatement(sql)) {
+                statement.setString(1, name);
+                try (var result = statement.executeQuery()) {
+                    if (!result.next()) {
+                        return null;
+                    }
+                    return mapAccount(result);
+                }
+            }
+        }
+    }
+
+    public List<Account> findAll() throws Exception {
+        try (Connection connection = database.getConnection()) {
+            String sql = """
+                    SELECT id, name, balance
+                    FROM accounts
+                    ORDER BY id ASC
+                    """;
+            List<Account> accounts = new ArrayList<>();
+            try (var statement = connection.prepareStatement(sql);
+                 var result = statement.executeQuery()) {
+                while (result.next()) {
+                    accounts.add(mapAccount(result));
+                }
+            }
+            return accounts;
+        }
+    }
+
+    private Account mapAccount(java.sql.ResultSet result) throws Exception {
+        return new Account(
+                result.getLong("id"),
+                result.getString("name"),
+                result.getBigDecimal("balance")
+        );
     }
 }

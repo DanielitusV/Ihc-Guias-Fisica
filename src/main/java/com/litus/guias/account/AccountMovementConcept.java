@@ -5,6 +5,7 @@ public enum AccountMovementConcept {
     GENERAL_EXPENSE,
     SUPPLIER_PAYMENT,
     SALE_CANCELLATION,
-    CLOSURE_ADJUSTMENT
+    CLOSURE_ADJUSTMENT,
+    OTHER
 }
 
