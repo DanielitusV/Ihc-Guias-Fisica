@@ -1,0 +1,28 @@
+GUÍAS FÍSICA 1.0.10
+
+INSTALACIÓN
+1. Extraiga todo el contenido del ZIP.
+2. Ejecute "Guías Física-1.0.10.exe".
+3. Acepte el permiso de administrador.
+4. Complete el asistente. Se creará un acceso directo en el Escritorio.
+
+ACTUALIZACIÓN
+Ejecute "Guías Física-1.0.10.exe" sobre la versión anterior. Los archivos del
+programa se actualizarán y la base de datos se conservará automáticamente.
+
+Antes de migrar datos, la aplicación crea y verifica un respaldo en:
+%LOCALAPPDATA%\GuiasFisica\Respaldos
+
+DATOS
+La información se guarda por separado en:
+%LOCALAPPDATA%\GuiasFisica\guias.db
+
+DESINSTALACIÓN
+Puede desinstalar desde Configuración de Windows o ejecutar
+"Desinstalar-Guías-Física.exe". El desinstalador permite conservar o borrar
+la base de datos.
+
+AVISO
+El instalador no está firmado digitalmente. Windows puede mostrar SmartScreen.
+Seleccione "Más información" y luego "Ejecutar de todas formas" si confía en
+el archivo recibido.
