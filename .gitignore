@@ -57,9 +57,6 @@ dist-ssr
 *.njsproj
 *.sln
 
-# Archivos generados
-*.zip
-*.exe
 # Java/Maven y entregables generados
 target/
 *.zip
