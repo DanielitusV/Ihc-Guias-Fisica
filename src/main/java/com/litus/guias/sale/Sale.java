@@ -7,17 +7,26 @@ public class Sale {
 
     private long id;
     private long guideId;
+    private long accountId;
     private BigDecimal price;
     private PaymentMethod paymentMethod;
     private LocalDateTime createdAt;
     private SaleStatus status;
     private String cancellationReason;
+    private LocalDateTime cancelledAt;
 
     public Sale(long id, long guideId, BigDecimal price,
                 PaymentMethod paymentMethod, LocalDateTime createdAt,
                 SaleStatus status) {
+        this(id, guideId, 0, price, paymentMethod, createdAt, status);
+    }
+
+    public Sale(long id, long guideId, long accountId, BigDecimal price,
+                PaymentMethod paymentMethod, LocalDateTime createdAt,
+                SaleStatus status) {
         this.id = id;
         this.guideId = guideId;
+        this.accountId = accountId;
         this.price = price;
         this.paymentMethod = paymentMethod;
         this.createdAt = createdAt;
@@ -25,6 +34,10 @@ public class Sale {
     }
 
     public void cancel(String reason) {
+        cancel(reason, null);
+    }
+
+    public void cancel(String reason, LocalDateTime cancelledAt) {
         if (status == SaleStatus.CANCELLED) {
             throw new IllegalStateException("Sale is already cancelled");
         }
@@ -35,6 +48,7 @@ public class Sale {
 
         this.status = SaleStatus.CANCELLED;
         this.cancellationReason = reason;
+        this.cancelledAt = cancelledAt;
     }
 
     public BigDecimal getPrice() {
@@ -57,11 +71,19 @@ public class Sale {
         return this.guideId;
     }
 
+    public long getAccountId() {
+        return accountId;
+    }
+
     public SaleStatus getStatus() {
         return this.status;
     }
 
     public String getCancellationReason() {
         return this.cancellationReason;
+    }
+
+    public LocalDateTime getCancelledAt() {
+        return cancelledAt;
     }
 }

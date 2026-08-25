@@ -21,8 +21,8 @@ public class OrderItem {
             throw new IllegalArgumentException("Quantity must be greater than zero");
         }
 
-        if (unitCost.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Unit cost must be greater than zero");
+        if (unitCost == null || unitCost.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Unit cost cannot be negative");
         }
 
         this.id = id;

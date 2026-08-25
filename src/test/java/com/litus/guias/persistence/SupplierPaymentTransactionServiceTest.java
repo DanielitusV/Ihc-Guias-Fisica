@@ -3,6 +3,10 @@ package com.litus.guias.persistence;
 import com.litus.guias.account.Account;
 import com.litus.guias.account.AccountMovement;
 import com.litus.guias.account.AccountMovementConcept;
+import com.litus.guias.inventory.Guide;
+import com.litus.guias.order.Order;
+import com.litus.guias.order.OrderItem;
+import com.litus.guias.order.OrderPaymentCondition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -10,8 +14,10 @@ import org.junit.jupiter.api.io.TempDir;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SupplierPaymentTransactionServiceTest {
 
@@ -38,6 +44,24 @@ class SupplierPaymentTransactionServiceTest {
                         0,
                         "Efectivo",
                         new BigDecimal("100.00")
+                )
+        );
+
+        long guideId = new GuideRepository(database).save(
+                new Guide(0, "Física I", new BigDecimal("35.00"), 0)
+        );
+        new OrderTransactionService(database).registerOrder(
+                new Order(
+                        0,
+                        OrderPaymentCondition.CREDIT,
+                        LocalDateTime.of(2026, 8, 15, 20, 0),
+                        List.of(new OrderItem(
+                                0,
+                                0,
+                                guideId,
+                                5,
+                                new BigDecimal("20.00")
+                        ))
                 )
         );
     }
@@ -74,6 +98,35 @@ class SupplierPaymentTransactionServiceTest {
         assertEquals(
                 "Pago parcial a fotocopiadora",
                 movement.getReason()
+        );
+    }
+
+    @Test
+    void paymentCannotExceedDebtAndRollsBackAccount() throws Exception {
+        SupplierPaymentTransactionService service =
+                new SupplierPaymentTransactionService(database);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.registerPayment(
+                        accountId,
+                        new BigDecimal("120.00"),
+                        "Pago excesivo",
+                        LocalDateTime.of(2026, 8, 15, 21, 30)
+                )
+        );
+
+        assertEquals(
+                0,
+                new BigDecimal("100.00").compareTo(
+                        accountRepository.findById(accountId).getBalance()
+                )
+        );
+        assertEquals(
+                0,
+                movementRepository.findByConcept(
+                        AccountMovementConcept.SUPPLIER_PAYMENT
+                ).size()
         );
     }
 }

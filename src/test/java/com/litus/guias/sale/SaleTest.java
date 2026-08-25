@@ -47,14 +47,15 @@ public class SaleTest {
 
     @Test
     public void cancellingSaleChangesStatusAndStoresReason() {
-
-        sale.cancel("Venta registrada por error");
+        LocalDateTime cancelledAt = date.plusDays(1);
+        sale.cancel("Venta registrada por error", cancelledAt);
 
         assertEquals(SaleStatus.CANCELLED, sale.getStatus());
         assertEquals(
                 "Venta registrada por error",
                 sale.getCancellationReason()
         );
+        assertEquals(cancelledAt, sale.getCancelledAt());
     }
 
     @Test

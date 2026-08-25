@@ -3,6 +3,7 @@ package com.litus.guias.closure;
 import com.litus.guias.account.CashClosureItem;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class CashClosure {
     private CashClosureStatus status;
     private String notes;
     private LocalDateTime createdAt;
+    private LocalDate businessDate;
 
     public CashClosure(
             long id,
@@ -30,12 +32,27 @@ public class CashClosure {
             LocalDateTime createdAt
 
     ) {
+        this(id, expectedCash, countedCash, expectedQr, reportedQr, notes,
+                createdAt.toLocalDate(), createdAt);
+    }
+
+    public CashClosure(
+            long id,
+            BigDecimal expectedCash,
+            BigDecimal countedCash,
+            BigDecimal expectedQr,
+            BigDecimal reportedQr,
+            String notes,
+            LocalDate businessDate,
+            LocalDateTime createdAt
+    ) {
         this.id = id;
         this.expectedCash = expectedCash;
         this.countedCash = countedCash;
         this.expectedQr = expectedQr;
         this.reportedQr = reportedQr;
         this.notes = notes;
+        this.businessDate = businessDate;
         this.createdAt = createdAt;
         this.status = CashClosureStatus.VALID;
     }
@@ -86,6 +103,10 @@ public class CashClosure {
         return createdAt;
     }
 
+    public LocalDate getBusinessDate() {
+        return businessDate;
+    }
+
     public BigDecimal getQrDifference() {
         return reportedQr.subtract(expectedQr);
     }
@@ -94,4 +115,27 @@ public class CashClosure {
         return status;
     }
 
+    public long getId() {
+        return id;
+    }
+
+    public BigDecimal getExpectedCash() {
+        return expectedCash;
+    }
+
+    public BigDecimal getCountedCash() {
+        return countedCash;
+    }
+
+    public BigDecimal getExpectedQr() {
+        return expectedQr;
+    }
+
+    public BigDecimal getReportedQr() {
+        return reportedQr;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
 }

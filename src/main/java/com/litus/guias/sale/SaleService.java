@@ -25,6 +25,7 @@ public class SaleService {
         Sale sale = new Sale(
                 0,
                 guide.getId(),
+                account.getId(),
                 guide.getCurrentPrice(),
                 paymentMethod,
                 createdAt,
@@ -51,7 +52,7 @@ public class SaleService {
             String reason,
             LocalDateTime createdAt
     ) {
-        sale.cancel(reason);
+        sale.cancel(reason, createdAt);
 
         guide.addOne();
         account.addExpense(sale.getPrice());
@@ -76,8 +77,7 @@ public class SaleService {
     ) {
         for (CashClosure closure : closures) {
             boolean sameDay =
-                    closure.getCreatedAt()
-                            .toLocalDate()
+                    closure.getBusinessDate()
                             .equals(createdAt.toLocalDate());
 
             boolean valid =

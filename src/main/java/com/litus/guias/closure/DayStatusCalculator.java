@@ -13,8 +13,7 @@ public class DayStatusCalculator {
     ) {
         for (CashClosure closure : closures) {
             boolean sameDay =
-                    closure.getCreatedAt()
-                            .toLocalDate()
+                    closure.getBusinessDate()
                             .equals(day);
 
             boolean isValid =

@@ -3,6 +3,7 @@ package com.litus.guias.account;
 import com.litus.guias.order.Order;
 import com.litus.guias.order.OrderItem;
 import com.litus.guias.order.OrderPaymentCondition;
+import com.litus.guias.order.OrderStatus;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -132,5 +133,21 @@ public class SupplierDebtCalculatorTest {
                         List.of(payment)
                 )
         );
+    }
+
+    @Test
+    void cancelledOrderDoesNotIncreaseDebt() {
+        Order order = new Order(
+                1,
+                OrderPaymentCondition.CREDIT,
+                LocalDateTime.of(2026, 8, 14, 20, 0),
+                List.of(new OrderItem(0, 1, 1, 10, new BigDecimal("20.00"))),
+                OrderStatus.CANCELLED,
+                "Registro equivocado",
+                LocalDateTime.of(2026, 8, 15, 8, 0),
+                null
+        );
+
+        assertEquals(BigDecimal.ZERO, new SupplierDebtCalculator().calculate(List.of(order)));
     }
 }

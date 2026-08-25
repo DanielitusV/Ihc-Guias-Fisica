@@ -19,6 +19,7 @@ public class SaleRepositoryTest {
     private Database database;
     private SaleRepository repository;
     private long guideId;
+    private long accountId;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -28,6 +29,13 @@ public class SaleRepositoryTest {
         GuideRepository guideRepository = new GuideRepository(database);
         guideId = guideRepository.save(
                 new Guide(0, "Física I", new BigDecimal("35.00"), 10)
+        );
+        accountId = new AccountRepository(database).save(
+                new com.litus.guias.account.Account(
+                        0,
+                        "Efectivo",
+                        BigDecimal.ZERO
+                )
         );
         repository = new SaleRepository(database);
 
@@ -43,6 +51,7 @@ public class SaleRepositoryTest {
         Sale sale = new Sale(
                 0,
                 guideId,
+                accountId,
                 new BigDecimal("35.00"),
                 PaymentMethod.CASH,
                 date,

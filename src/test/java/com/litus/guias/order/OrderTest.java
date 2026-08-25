@@ -49,4 +49,17 @@ public class OrderTest {
                 order.getTotalCost()
         );
     }
+
+    @Test
+    void detectsPendingUnitCosts() {
+        Order pending = new Order(
+                1, OrderPaymentCondition.CREDIT, LocalDateTime.now(),
+                List.of(new OrderItem(0, 1, 1, 5, BigDecimal.ZERO)));
+        Order confirmed = new Order(
+                2, OrderPaymentCondition.CREDIT, LocalDateTime.now(),
+                List.of(new OrderItem(0, 2, 1, 5, new BigDecimal("20"))));
+
+        assertEquals(true, pending.hasPendingCost());
+        assertEquals(false, confirmed.hasPendingCost());
+    }
 }

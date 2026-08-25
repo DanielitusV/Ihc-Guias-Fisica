@@ -2,6 +2,7 @@ package com.litus.guias.account;
 
 import com.litus.guias.order.Order;
 import com.litus.guias.order.OrderPaymentCondition;
+import com.litus.guias.order.OrderStatus;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,7 +17,8 @@ public class SupplierDebtCalculator {
         BigDecimal debt = BigDecimal.ZERO;
 
         for (Order order : orders) {
-            if (order.getPaymentCondition() == OrderPaymentCondition.CREDIT) {
+            if (order.getStatus() == OrderStatus.ACTIVE
+                    && order.getPaymentCondition() == OrderPaymentCondition.CREDIT) {
                 debt = debt.add(order.getTotalCost());
             }
         }
@@ -29,7 +31,7 @@ public class SupplierDebtCalculator {
 
         if (debt.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalStateException(
-                    "Supplier debt cannot be negative"
+                    "La deuda del proveedor no puede quedar negativa; revisa pagos registrados"
             );
         }
 

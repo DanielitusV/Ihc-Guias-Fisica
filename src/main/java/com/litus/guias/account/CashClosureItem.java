@@ -25,4 +25,24 @@ public class CashClosureItem {
     public int getDifference() {
         return countedStock - expectedStock;
     }
+
+    public long getId() {
+        return id;
+    }
+
+    public long getCashClosureId() {
+        return cashClosureId;
+    }
+
+    public long getGuideId() {
+        return guideId;
+    }
+
+    public int getExpectedStock() {
+        return expectedStock;
+    }
+
+    public int getCountedStock() {
+        return countedStock;
+    }
 }
